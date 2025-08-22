@@ -1,0 +1,51 @@
+[package]
+name = "bevy_procedural_tree"
+authors = ["Affinator"]
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bevy = { version = "0.16.1", default-features = false, features =  [
+    "bevy_color",
+    "bevy_gizmos",
+    "bevy_log",
+    "bevy_pbr",
+    "bevy_render",
+    "multi_threaded",
+    "std"
+]}
+
+[dev-dependencies]
+bevy = { version = "0.16.1", default-features = false, features =  [
+    "bevy_color",
+    "bevy_core_pipeline",
+    "bevy_gizmos",
+    "bevy_log",
+    "bevy_pbr",
+    "bevy_render",
+    "bevy_state",
+    "bevy_window",
+    "bevy_winit",
+    "hdr",
+    "multi_threaded",
+    "std",
+    "sysinfo_plugin",
+    "wayland"
+]}
+
+bevy-inspector-egui = "0.33"
+iyes_perf_ui = "0.5"
+
+# Enable max optimizations for dependencies, but not for our code:
+[profile.dev.package."*"]
+opt-level = 3
+debug = false
+strip = true
+debug-assertions = false # for possible performance regressions (i.e. in WGPU)
+overflow-checks = false
+
+# Enable only a small amount of optimization in debug mode
+[profile.dev]
+opt-level = 1
+debug = false
+strip = true
