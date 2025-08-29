@@ -4,7 +4,7 @@ use bevy::core_pipeline::tonemapping::Tonemapping;
 use bevy::render::diagnostic::RenderDiagnosticsPlugin;
 use bevy_inspector_egui::bevy_egui::EguiPlugin;
 use bevy_inspector_egui::quick::{ResourceInspectorPlugin, WorldInspectorPlugin};
-use bevy_procedural_tree::{TreeGenSettings, TreeProceduralGenerationPlugin};
+use bevy_procedural_tree::{Tree, TreeGenSettings, TreeProceduralGenerationPlugin};
 use iyes_perf_ui::prelude::*;
 
 fn main() {
@@ -53,5 +53,11 @@ fn setup(
         Camera3d::default(),
         Transform::from_xyz(-2.5, 4.5, 9.0).looking_at(Vec3::ZERO, Vec3::Y),
         Tonemapping::None,
+    ));
+
+    // tree
+    commands.spawn((
+        Tree,
+        Transform::from_xyz(0.0, 0.0, 0.0)
     ));
 }
