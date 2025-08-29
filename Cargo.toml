@@ -4,6 +4,11 @@ authors = ["Affinator"]
 version = "0.1.0"
 edition = "2024"
 
+[features]
+default = []
+inspector = ["bevy-inspector-egui"]
+perf_ui = ["iyes_perf_ui"]
+
 [dependencies]
 bevy = { version = "0.16.1", default-features = false, features =  [
     "bevy_color",
@@ -14,6 +19,8 @@ bevy = { version = "0.16.1", default-features = false, features =  [
     "multi_threaded",
     "std"
 ]}
+bevy-inspector-egui = { version = "0.33.1", optional = true }
+iyes_perf_ui = { version = "0.5", optional = true }
 
 [dev-dependencies]
 bevy = { version = "0.16.1", default-features = false, features =  [
@@ -30,11 +37,10 @@ bevy = { version = "0.16.1", default-features = false, features =  [
     "multi_threaded",
     "std",
     "sysinfo_plugin",
-    "wayland"
+    "wayland",
+    "default_font",
+    "sysinfo_plugin"
 ]}
-
-bevy-inspector-egui = "0.33"
-iyes_perf_ui = "0.5"
 
 # Enable max optimizations for dependencies, but not for our code:
 [profile.dev.package."*"]
@@ -49,3 +55,7 @@ overflow-checks = false
 opt-level = 1
 debug = false
 strip = true
+
+[[example]]
+name = "showroom"
+required-features = ["inspector", "perf_ui"]

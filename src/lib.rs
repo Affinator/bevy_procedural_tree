@@ -1,14 +1,37 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
+use bevy::prelude::*;
+
+#[cfg(feature="inspector")]
+use bevy_inspector_egui::prelude::*;
+
+
+pub struct TreeProceduralGenerationPlugin;
+
+impl Plugin for TreeProceduralGenerationPlugin {
+    fn build(&self, app: &mut App) {
+        app.init_resource::<TreeGenSettings>();
+        app.register_type::<TreeGenSettings>();
+    }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+#[cfg(feature="inspector")]
+#[derive(Resource, Reflect, InspectorOptions)]
+#[reflect(Resource, InspectorOptions)]
+pub struct TreeGenSettings {
+    #[inspector(min = 0.1, max = 10.0)]
+    trunk_height: f32
+}
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
+#[cfg(not(feature="inspector"))]
+#[derive(Resource, Reflect)]
+#[reflect(Resource)]
+pub struct TreeGenSettings {
+    trunk_height: f32
+}
+
+impl Default for TreeGenSettings {
+    fn default() -> Self {
+        Self { 
+            trunk_height: 2.0
+        }
     }
 }
