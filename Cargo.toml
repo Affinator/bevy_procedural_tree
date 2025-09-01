@@ -20,6 +20,7 @@ bevy = { version = "0.16.1", default-features = false, features =  [
     "std"
 ]}
 bevy-inspector-egui = { version = "0.33.1", optional = true }
+fastrand = "2.3"
 iyes_perf_ui = { version = "0.5", optional = true }
 
 [dev-dependencies]
