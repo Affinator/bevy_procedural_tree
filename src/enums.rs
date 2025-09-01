@@ -2,7 +2,9 @@
 * Inspiration taken with great thanks from: https://github.com/dgreenheck/ez-tree
 */
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+use bevy::reflect::Reflect;
+
+#[derive(Reflect, Clone, Copy, Debug, PartialEq)]
 pub enum BarkType {
   Birch,
   Oak,
@@ -10,13 +12,13 @@ pub enum BarkType {
   Willow
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Reflect, Clone, Copy, Debug, PartialEq)]
 pub enum LeafBillboard {
   Single,
   Double,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Reflect, Clone, Copy, Debug, PartialEq)]
 pub enum LeafType {
   Ash,
   Aspen,
@@ -24,7 +26,7 @@ pub enum LeafType {
   Oak,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Reflect, Clone, Copy, Debug, PartialEq)]
 pub enum TreeType {
   Deciduous,
   Evergreen,

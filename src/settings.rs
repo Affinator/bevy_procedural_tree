@@ -11,27 +11,37 @@ use crate::enums::{BarkType, LeafBillboard, LeafType, TreeType};
 
 
 #[cfg(feature="inspector")]
-#[derive(Resource, Reflect, InspectorOptions)]
+#[derive(Resource, Reflect, InspectorOptions, Debug, Clone, PartialEq)]
 #[reflect(Resource, InspectorOptions)]
-pub struct TreeGenSettings {
-    #[inspector(min = 0.1, max = 5.0)]
-    pub trunk_height: f32,
-    #[inspector(min = 0.05, max = 1.5)]
-    pub trunk_radius: f32
+pub struct TreeSettings {
+    pub seed: u32,
+    pub tree_type: TreeType,
+    pub bark: BarkParams,
+    pub branch: BranchParams,
+    pub leaves: LeafParams,
 }
+
 
 #[cfg(not(feature="inspector"))]
-#[derive(Resource, Reflect)]
+#[derive(Resource, Reflect, Debug, Clone, PartialEq)]
 #[reflect(Resource)]
-pub struct TreeGenSettings {
-    trunk_height: f32
+pub struct TreeSettings {
+    pub seed: u32,
+    pub tree_type: TreeType,
+    pub bark: BarkParams,
+    pub branch: BranchParams,
+    pub leaves: LeafParams,
 }
 
-impl Default for TreeGenSettings {
+
+impl Default for TreeSettings {
     fn default() -> Self {
-        Self { 
-            trunk_height: 2.0,
-            trunk_radius: 0.4,
+        Self {
+            seed: 0,
+            tree_type: TreeType::Deciduous,
+            bark: BarkParams::default(),
+            branch: BranchParams::default(),
+            leaves: LeafParams::default(),
         }
     }
 }
@@ -41,7 +51,7 @@ impl Default for TreeGenSettings {
 
 
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Reflect, Debug, Clone, PartialEq)]
 pub struct BarkParams {
     pub bark_type: BarkType,  
     pub tint: Color,
@@ -68,7 +78,7 @@ impl Default for BarkParams {
  * This branch force controls a direction vector and an amount to lerp between the random direction and this vector by the given strength.
  * This can be used i.e. for trees that generally have branches that point in a specific direction (i.e. up:Aspen or down:Willow).
  */
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Reflect, Debug, Clone, PartialEq)]
 pub struct BranchForce {
     pub direction: Vec3,
     pub strength: f32,
@@ -86,7 +96,7 @@ impl Default for BranchForce {
 /**
  * amount of recursion for branches (0 = only trunk, no branches)
  */
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Reflect, Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
 pub enum BranchRecursionLevel {
     Zero = 0,
@@ -119,7 +129,7 @@ impl From<BranchRecursionLevel> for usize {
 }
 
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Reflect, Debug, Clone, PartialEq)]
 pub struct BranchParams {
     /// amount of recursion for branches (0 = only trunk, no branches)
     pub levels: BranchRecursionLevel,
@@ -166,8 +176,8 @@ impl Default for BranchParams {
             children: [7, 7, 5, 2],
             force: BranchForce::default(),
             gnarliness: [0.15, 0.20, 0.30, 0.02],
-            length: [20.0, 20.0, 10.0, 1.0],
-            radius: [1.5, 0.7, 0.7, 0.7],
+            length: [3.0, 2.0, 1.5, 0.5],
+            radius: [0.5, 0.3, 0.3, 0.2],
             sections: [12, 10, 8, 6],
             segments: [8, 6, 4, 3],
             start: [0.0, 0.4, 0.3, 0.3],
@@ -181,7 +191,7 @@ impl Default for BranchParams {
  * Leaves are only added to the last level of branches.
  * Control how they look like and how they are positioned relative to the last level of branches (or on the trunk if levels = 0).
  */
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Reflect, Debug, Clone, PartialEq)]
 pub struct LeafParams {
     /// leaf texture to use
     pub leaf_type: LeafType,
@@ -215,28 +225,6 @@ impl Default for LeafParams {
             size_variance: 0.7,
             tint: Color::WHITE,
             alpha_test: 0.5,
-        }
-    }
-}
-
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct TreeOptions {
-    pub seed: u32,
-    pub tree_type: TreeType,
-    pub bark: BarkParams,
-    pub branch: BranchParams,
-    pub leaves: LeafParams,
-}
-
-impl Default for TreeOptions {
-    fn default() -> Self {
-        Self {
-            seed: 0,
-            tree_type: TreeType::Deciduous,
-            bark: BarkParams::default(),
-            branch: BranchParams::default(),
-            leaves: LeafParams::default(),
         }
     }
 }

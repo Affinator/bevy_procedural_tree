@@ -4,7 +4,7 @@ use bevy::core_pipeline::tonemapping::Tonemapping;
 use bevy::render::diagnostic::RenderDiagnosticsPlugin;
 use bevy_inspector_egui::bevy_egui::EguiPlugin;
 use bevy_inspector_egui::quick::{ResourceInspectorPlugin, WorldInspectorPlugin};
-use bevy_procedural_tree::settings::TreeGenSettings;
+use bevy_procedural_tree::settings::TreeSettings;
 use bevy_procedural_tree::{Tree, TreeProceduralGenerationPlugin};
 use iyes_perf_ui::prelude::*;
 
@@ -19,7 +19,7 @@ fn main() {
     .add_plugins(PerfUiPlugin)
     .add_plugins(EguiPlugin::default())
     .add_plugins(WorldInspectorPlugin::new())
-    .add_plugins(ResourceInspectorPlugin::<TreeGenSettings>::default())
+    .add_plugins(ResourceInspectorPlugin::<TreeSettings>::default())
     .add_systems(Startup, setup)
     .run();
 }

@@ -3,19 +3,17 @@ pub mod settings;
 
 use bevy::{ecs::{component::HookContext, world::DeferredWorld}, prelude::*, render::mesh::{CylinderAnchor, CylinderMeshBuilder}};
 
-use crate::settings::TreeGenSettings;
-
-
+use crate::settings::TreeSettings;
 
 
 pub struct TreeProceduralGenerationPlugin;
 
 impl Plugin for TreeProceduralGenerationPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<TreeGenSettings>();
-        app.register_type::<TreeGenSettings>();
+        app.init_resource::<TreeSettings>();
+        app.register_type::<TreeSettings>();
 
-        app.add_systems(PostUpdate, update_tree.run_if(resource_changed::<TreeGenSettings>));
+        app.add_systems(PostUpdate, update_tree.run_if(resource_changed::<TreeSettings>));
     }
 }
 
@@ -38,6 +36,7 @@ fn new_tree_component_added(mut world: DeferredWorld, context: HookContext) {
     let mut commands = world.commands();
     let mut tree_commands = commands.entity(tree_entity);
     tree_commands.insert((
+        Name::new("ProcGenTree"),
         mesh,
         material
     ));
@@ -46,12 +45,12 @@ fn new_tree_component_added(mut world: DeferredWorld, context: HookContext) {
 
 fn update_tree(
     mut tree_transforms: Query<&mut Transform, With<Tree>>,
-    tree_settings: Res<TreeGenSettings>
+    tree_settings: Res<TreeSettings>
 ) {
-    info!("Updating trees, due to changed TreeGenSettings...");
+    info!("Updating trees, due to changed TreeSettings...");
     for mut tree_transform in tree_transforms.iter_mut() {
-        tree_transform.scale.y = tree_settings.trunk_height;
-        tree_transform.scale.x = tree_settings.trunk_radius;
-        tree_transform.scale.z = tree_settings.trunk_radius;
+        tree_transform.scale.y = tree_settings.branch.length[0];
+        tree_transform.scale.x = tree_settings.branch.radius[0];
+        tree_transform.scale.z = tree_settings.branch.radius[0];
     }
 }
