@@ -1,7 +1,11 @@
+pub mod enums;
+pub mod settings;
+
 use bevy::{ecs::{component::HookContext, world::DeferredWorld}, prelude::*, render::mesh::{CylinderAnchor, CylinderMeshBuilder}};
 
-#[cfg(feature="inspector")]
-use bevy_inspector_egui::prelude::*;
+use crate::settings::TreeGenSettings;
+
+
 
 
 pub struct TreeProceduralGenerationPlugin;
@@ -15,31 +19,6 @@ impl Plugin for TreeProceduralGenerationPlugin {
     }
 }
 
-#[cfg(feature="inspector")]
-#[derive(Resource, Reflect, InspectorOptions)]
-#[reflect(Resource, InspectorOptions)]
-pub struct TreeGenSettings {
-    #[inspector(min = 0.1, max = 5.0)]
-    trunk_height: f32,
-    #[inspector(min = 0.05, max = 1.5)]
-    trunk_radius: f32
-}
-
-#[cfg(not(feature="inspector"))]
-#[derive(Resource, Reflect)]
-#[reflect(Resource)]
-pub struct TreeGenSettings {
-    trunk_height: f32
-}
-
-impl Default for TreeGenSettings {
-    fn default() -> Self {
-        Self { 
-            trunk_height: 2.0,
-            trunk_radius: 0.4,
-        }
-    }
-}
 
 
 #[derive(Component, Reflect)]

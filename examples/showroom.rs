@@ -4,7 +4,8 @@ use bevy::core_pipeline::tonemapping::Tonemapping;
 use bevy::render::diagnostic::RenderDiagnosticsPlugin;
 use bevy_inspector_egui::bevy_egui::EguiPlugin;
 use bevy_inspector_egui::quick::{ResourceInspectorPlugin, WorldInspectorPlugin};
-use bevy_procedural_tree::{Tree, TreeGenSettings, TreeProceduralGenerationPlugin};
+use bevy_procedural_tree::settings::TreeGenSettings;
+use bevy_procedural_tree::{Tree, TreeProceduralGenerationPlugin};
 use iyes_perf_ui::prelude::*;
 
 fn main() {
