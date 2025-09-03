@@ -11,10 +11,10 @@ use crate::enums::{BarkType, LeafBillboard, LeafType, TreeType};
 
 
 #[cfg(feature="inspector")]
-#[derive(Resource, Reflect, InspectorOptions, Debug, Clone, PartialEq)]
-#[reflect(Resource, InspectorOptions)]
+#[derive(Resource, Component, Reflect, InspectorOptions, Debug, Clone, PartialEq)]
+#[reflect(Resource, Component, InspectorOptions)]
 pub struct TreeSettings {
-    pub seed: u32,
+    pub seed: u64,
     pub tree_type: TreeType,
     pub bark: BarkParams,
     pub branch: BranchParams,
@@ -23,10 +23,10 @@ pub struct TreeSettings {
 
 
 #[cfg(not(feature="inspector"))]
-#[derive(Resource, Reflect, Debug, Clone, PartialEq)]
-#[reflect(Resource)]
+#[derive(Resource, Component, Reflect, Debug, Clone, PartialEq)]
+#[reflect(Resource, Component)]
 pub struct TreeSettings {
-    pub seed: u32,
+    pub seed: u64,
     pub tree_type: TreeType,
     pub bark: BarkParams,
     pub branch: BranchParams,
@@ -80,15 +80,24 @@ impl Default for BarkParams {
  */
 #[derive(Reflect, Debug, Clone, PartialEq)]
 pub struct BranchForce {
+    /// in which direction should all branches be pointed based on their radius (larger radius = smaller influence of this force)
+    /// value will be normalized internally; no need to do it beforehand
     pub direction: Vec3,
+    /// how strong this force is (1.0 -> the branch points in this direction); sensible values are below 1.0
+    /// must be positive; negative values will be ignored
     pub strength: f32,
+    /// starting at which branch radius should the force not have any effect
+    /// default is 0.1 (a branch of a thickness of 20cm should not be bothered by outside forces)
+    /// must be positive
+    pub radius_cutoff: f32
 }
 
 impl Default for BranchForce {
     fn default() -> Self {
         Self {
             direction: Vec3 { x: 0.0, y: 1.0, z: 0.0 },
-            strength: 0.01,
+            strength: 0.05,
+            radius_cutoff: 0.1,
         }
     }
 }
@@ -103,7 +112,7 @@ pub enum BranchRecursionLevel {
     One  = 1,
     Two  = 2,
     Three= 3,
-    Four = 4,
+    //Four = 4, // four recursion levels create way to small branches (polygons in the subpixel range)
 }
 
 impl TryFrom<u8> for BranchRecursionLevel {
@@ -114,7 +123,7 @@ impl TryFrom<u8> for BranchRecursionLevel {
             1 => Ok(BranchRecursionLevel::One),
             2 => Ok(BranchRecursionLevel::Two),
             3 => Ok(BranchRecursionLevel::Three),
-            4 => Ok(BranchRecursionLevel::Four),
+            //4 => Ok(BranchRecursionLevel::Four), // four recursion levels create way to small branches (polygons in the subpixel range)
             _ => Err(()),
         }
     }
@@ -128,6 +137,10 @@ impl From<BranchRecursionLevel> for usize {
     fn from(z: BranchRecursionLevel) -> usize { z as usize }
 }
 
+impl From<BranchRecursionLevel> for f32 {
+    fn from(z: BranchRecursionLevel) -> f32 { z as usize as f32 }
+}
+
 
 #[derive(Reflect, Debug, Clone, PartialEq)]
 pub struct BranchParams {
@@ -135,22 +148,27 @@ pub struct BranchParams {
     pub levels: BranchRecursionLevel,
 
     /// angle of child branch(es) to parent branch/trunk per level 0..3
+    /// The first value is ignored (the trunk is always perpendicular to the ground)
     pub angle: [f32; 4],
 
-    /// amount of children per level 0..3
+    /// amount of children per level 0..3 (0 = trunk)
     pub children: [u8; 4],
 
     /// Control the general direction of branches
     pub force: BranchForce,
 
-    /// curling/twisting per level
+    /// curling/twisting per level (0=straight; 1=very crooked; values higher than 1 can work, but may create unrealistic branches)
     pub gnarliness: [f32; 4],
 
     /// length per level
     pub length: [f32; 4],
 
-    /// radius per level
-    pub radius: [f32; 4],
+    /// radius of the trunk (at the base; taper reduces the trunk's radius at the top)
+    pub trunk_base_radius: f32,
+
+    /// radius factor per level (how much smaller/larger the radius of a branch in relation to the parent branch)
+    /// The first value is ignored (the trunk's radius is given by trunk_base_radius)
+    pub radius_factor: [f32; 4],
 
     /// how many sections each brach has per level (along its length; more sections = more polygons)
     pub sections: [u8; 4],
@@ -159,6 +177,7 @@ pub struct BranchParams {
     pub segments: [u8; 4],
 
     /// when to start adding child branches along the length of the branch (0..1) per level
+    /// The first value is ignored (the trunk is always starting at the ground level)
     pub start: [f32; 4],
 
     /// taper per level
@@ -172,17 +191,18 @@ impl Default for BranchParams {
     fn default() -> Self {
         Self {
             levels: BranchRecursionLevel::Three,
-            angle: [0.0, 70.0, 60.0, 60.0],
-            children: [7, 7, 5, 2],
+            angle: [0.0, 39.0, 39.0, 59.0],
+            children: [10, 4, 3, 1],
             force: BranchForce::default(),
-            gnarliness: [0.15, 0.20, 0.30, 0.02],
-            length: [3.0, 2.0, 1.5, 0.5],
-            radius: [0.5, 0.3, 0.3, 0.2],
-            sections: [12, 10, 8, 6],
+            gnarliness: [-0.05, 0.20, 0.16, 0.05],
+            length: [4.5, 2.9, 1.5, 0.45],
+            trunk_base_radius: 0.2,
+            radius_factor: [1.0, 0.5, 0.5, 0.5],
+            sections: [12, 8, 6, 4],
             segments: [8, 6, 4, 3],
-            start: [0.0, 0.4, 0.3, 0.3],
-            taper: [0.7, 0.7, 0.7, 0.7],
-            twist: [0.0, 0.0, 0.0, 0.0],
+            start: [0.0, 0.32, 0.4, 0.0],
+            taper: [0.8, 0.72, 0.86, 0.7],
+            twist: [0.09, -0.07, 0.0, 0.0],
         }
     }
 }

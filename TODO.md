@@ -1,6 +1,8 @@
 # Rough sketch:
     - create showroom 
     - create single tree
+    - Try to modify existing tree instead of regenerating everything
+    - Implement "growing"
     - allow creating multiple trees
     - allow managing tree generation
 

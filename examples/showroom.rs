@@ -52,10 +52,17 @@ fn setup(
     // camera
     commands.spawn((
         Camera3d::default(),
-        Transform::from_xyz(-2.5, 6.75, 9.0).looking_at(Vec3::ZERO, Vec3::Y),
+        Transform::from_xyz(-2.5, 2.0, 9.0).looking_at(Vec3::new(0.0, 2.0, 0.0), Vec3::Y),
         Tonemapping::None,
     ));
 
+    // cube for comparison
+    let height: f32 = 5.0;
+    commands.spawn((
+        Mesh3d(meshes.add(Cylinder::new(height/10.0, height))),
+        MeshMaterial3d(materials.add(Color::WHITE)),
+        Transform::from_xyz(3.0, height/2.0, 0.0)
+    ));
     // tree
     commands.spawn((
         Tree,
