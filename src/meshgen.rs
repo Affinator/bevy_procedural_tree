@@ -4,7 +4,7 @@ use std::f32::consts::PI;
 use bevy::{asset::RenderAssetUsages, prelude::*, render::mesh::{Indices, PrimitiveTopology}};
 use fastrand::Rng;
 
-use crate::{enums::TreeType, settings::TreeSettings};
+use crate::{enums::TreeType, settings::{BranchRecursionLevel, TreeSettings}};
 
 #[derive(Debug, Clone)]
 struct BranchGenState {
@@ -50,16 +50,17 @@ fn generate_branches_internal(settings: &TreeSettings, state: BranchGenState, rn
     let mut positions: Vec<[f32; 3]> = Vec::new(); //with_capacity(rings * ring_stride);
     let mut normals:   Vec<[f32; 3]> = Vec::new();  //with_capacity(rings * ring_stride);
     let mut uvs:       Vec<[f32; 2]> = Vec::new(); //with_capacity(rings * ring_stride);
-    //let mut colors:    Vec<[f32; 4]> = Vec::new(); //with_capacity(rings * ring_stride);
+    let mut colors:    Vec<[f32; 4]> = Vec::new(); //with_capacity(rings * ring_stride);
     let mut indices: Vec<u16> = Vec::new(); //with_capacity(state.sections * state.segments * 6);
 
-    recurse_a_branch(settings, state, rng, &mut positions, &mut normals, &mut uvs, &mut indices);
+    recurse_a_branch(settings, state, rng, &mut positions, &mut normals, &mut uvs, &mut indices, &mut colors);
     
     // build mesh
     let mut mesh = Mesh::new(PrimitiveTopology::TriangleList, RenderAssetUsages::MAIN_WORLD | RenderAssetUsages::RENDER_WORLD);
     mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions);
     mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
     mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
+    mesh.insert_attribute(Mesh::ATTRIBUTE_COLOR, colors);
     mesh.insert_indices(Indices::U16(indices));
 
     mesh
@@ -73,7 +74,8 @@ fn recurse_a_branch(
     positions: &mut Vec<[f32; 3]>,
     normals: &mut Vec<[f32; 3]>,
     uvs: &mut Vec<[f32; 2]>,
-    indices: &mut Vec<u16>
+    indices: &mut Vec<u16>,
+    colors: &mut Vec<[f32; 4]>
 ) 
 {       
     let indices_start: u16 = positions.len() as u16;
@@ -81,13 +83,19 @@ fn recurse_a_branch(
     let mut sections: Vec<SectionData> = Vec::with_capacity(state.sections);
     
     // calculate the length of each section (one vertical ring)
-    let number_of_levels_for_trunk_if_deciduous: f32 = if state.level > 0 {1.0} else {
+        
+    // give the different parts of a Deciduous branch a different length based on the level (lower level = more length)
+    // the sum should be equal to the target length (state.length for Deciduous trunks; at level 0)
+    // target formula: (max_level - current_level + 1) / sum of (possible_levels+1)
+    let target_pieces: f32 = (1..=(settings.branch.levels as usize+1)).sum::<usize>() as f32;
+    let factor_for_length: f32 = if state.level > 0 {1.0} else {
         match settings.tree_type {
-        TreeType::Deciduous => (settings.branch.levels as u8 + 1) as f32, // TODO: check warum in JS das ohne max geht
-        TreeType::Evergreen => 1.0,
-    }};
+            TreeType::Deciduous => (settings.branch.levels as usize - state.recursion_count + 1) as f32 / target_pieces,
+            TreeType::Evergreen => 1.0,
+        }
+    };
 
-    let section_length = state.length / state.sections as f32 / number_of_levels_for_trunk_if_deciduous;
+    let section_length = state.length / state.sections as f32 * factor_for_length;
 
     // create state for iterations
     let mut section_orientation = state.orientation;
@@ -148,13 +156,13 @@ fn recurse_a_branch(
             normals.push(normal.to_array());
             uvs.push([u,v]);
             // color code levels for debugging
-            // match BranchRecursionLevel::try_from(state.recursion_count as u8).unwrap() {
-            //     BranchRecursionLevel::Zero => colors.push([1.0, 0.0, 0.0, 1.0]),
-            //     BranchRecursionLevel::One => colors.push([0.0, 1.0, 0.0, 1.0]),
-            //     BranchRecursionLevel::Two => colors.push([0.0, 0.0, 1.0, 1.0]),
-            //     BranchRecursionLevel::Three => colors.push([0.0, 1.0, 1.0, 1.0]),
-            //     //BranchRecursionLevel::Four => colors.push([1.0, 1.0, 1.0, 1.0]),
-            // }
+            match BranchRecursionLevel::try_from(state.recursion_count as u8).unwrap() {
+                BranchRecursionLevel::Zero => colors.push([1.0, 0.0, 0.0, 1.0]),
+                BranchRecursionLevel::One => colors.push([0.0, 1.0, 0.0, 1.0]),
+                BranchRecursionLevel::Two => colors.push([0.0, 0.0, 1.0, 1.0]),
+                BranchRecursionLevel::Three => colors.push([0.0, 1.0, 1.0, 1.0]),
+                //BranchRecursionLevel::Four => colors.push([1.0, 1.0, 1.0, 1.0]),
+            }
             
         } // END for each segment
     
@@ -163,13 +171,13 @@ fn recurse_a_branch(
         normals.push(first_nrm.to_array());
         uvs.push([1.0, first_v]);
         // color code levels for debugging
-        // match BranchRecursionLevel::try_from(state.recursion_count as u8).unwrap() {
-        //     BranchRecursionLevel::Zero => colors.push([1.0, 0.0, 0.0, 1.0]),
-        //     BranchRecursionLevel::One => colors.push([0.0, 1.0, 0.0, 1.0]),
-        //     BranchRecursionLevel::Two => colors.push([0.0, 0.0, 1.0, 1.0]),
-        //     BranchRecursionLevel::Three => colors.push([0.0, 1.0, 1.0, 1.0]),
-        //     //BranchRecursionLevel::Four => colors.push([1.0, 1.0, 1.0, 1.0]),
-        // }
+        match BranchRecursionLevel::try_from(state.recursion_count as u8).unwrap() {
+            BranchRecursionLevel::Zero => colors.push([1.0, 0.0, 0.0, 1.0]),
+            BranchRecursionLevel::One => colors.push([0.0, 1.0, 0.0, 1.0]),
+            BranchRecursionLevel::Two => colors.push([0.0, 0.0, 1.0, 1.0]),
+            BranchRecursionLevel::Three => colors.push([0.0, 1.0, 1.0, 1.0]),
+            //BranchRecursionLevel::Four => colors.push([1.0, 1.0, 1.0, 1.0]),
+        }
     
         // save section data for later allow branches to grow from them
         sections.push(SectionData {
@@ -239,7 +247,7 @@ fn recurse_a_branch(
                 sections: state.sections,
                 segments: state.segments,
             };
-            recurse_a_branch(settings, additional_trunk_part, rng, positions, normals, uvs, indices);
+            recurse_a_branch(settings, additional_trunk_part, rng, positions, normals, uvs, indices, colors);
         }
         else {
             // TODO generate leaves
@@ -257,7 +265,7 @@ fn recurse_a_branch(
             settings,
             rng
         ) {
-            recurse_a_branch(settings, child_branch_state, rng, positions, normals, uvs, indices);
+            recurse_a_branch(settings, child_branch_state, rng, positions, normals, uvs, indices, colors);
         }
     }
 }
