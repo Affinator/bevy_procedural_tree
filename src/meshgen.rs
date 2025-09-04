@@ -28,6 +28,14 @@ struct SectionData {
     pub radius: f32
 }
 
+#[derive(Debug, Default)]
+struct MeshAttributes {
+    positions: Vec<[f32; 3]>,
+    normals: Vec<[f32; 3]>,
+    uvs: Vec<[f32; 2]>,
+    indices: Vec<u16>
+}
+
 pub(crate) fn generate_branches(settings: &TreeSettings, rng: &mut Rng) -> Mesh { 
     let state: BranchGenState = BranchGenState {
         origin: Vec3::ZERO,
@@ -47,21 +55,19 @@ pub(crate) fn generate_branches(settings: &TreeSettings, rng: &mut Rng) -> Mesh 
 
 fn generate_branches_internal(settings: &TreeSettings, state: BranchGenState, rng: &mut Rng) -> Mesh { 
     // Allocate mesh attributes
-    let mut positions: Vec<[f32; 3]> = Vec::new(); //with_capacity(rings * ring_stride);
-    let mut normals:   Vec<[f32; 3]> = Vec::new();  //with_capacity(rings * ring_stride);
-    let mut uvs:       Vec<[f32; 2]> = Vec::new(); //with_capacity(rings * ring_stride);
+    // TODO allocate just enough to reduce reallocations
+    let mut attributes: MeshAttributes = MeshAttributes::default();
     let mut colors:    Vec<[f32; 4]> = Vec::new(); //with_capacity(rings * ring_stride);
-    let mut indices: Vec<u16> = Vec::new(); //with_capacity(state.sections * state.segments * 6);
 
-    recurse_a_branch(settings, state, rng, &mut positions, &mut normals, &mut uvs, &mut indices, &mut colors);
+    recurse_a_branch(settings, state, rng, &mut attributes, &mut colors);
     
     // build mesh
     let mut mesh = Mesh::new(PrimitiveTopology::TriangleList, RenderAssetUsages::MAIN_WORLD | RenderAssetUsages::RENDER_WORLD);
-    mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions);
-    mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
-    mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
+    mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, attributes.positions);
+    mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, attributes.normals);
+    mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, attributes.uvs);
+    mesh.insert_indices(Indices::U16(attributes.indices));
     mesh.insert_attribute(Mesh::ATTRIBUTE_COLOR, colors);
-    mesh.insert_indices(Indices::U16(indices));
 
     mesh
 }
@@ -71,14 +77,11 @@ fn recurse_a_branch(
     settings: &TreeSettings,
     state: BranchGenState,
     rng: &mut Rng,
-    positions: &mut Vec<[f32; 3]>,
-    normals: &mut Vec<[f32; 3]>,
-    uvs: &mut Vec<[f32; 2]>,
-    indices: &mut Vec<u16>,
+    attributes: &mut MeshAttributes,
     colors: &mut Vec<[f32; 4]>
 ) 
 {       
-    let indices_start: u16 = positions.len() as u16;
+    let indices_start: u16 = attributes.positions.len() as u16;
     // local section storage    
     let mut sections: Vec<SectionData> = Vec::with_capacity(state.sections);
     
@@ -152,9 +155,9 @@ fn recurse_a_branch(
                 first_nrm = normal;
                 first_v = v;
             }            
-            positions.push(vertex.to_array());
-            normals.push(normal.to_array());
-            uvs.push([u,v]);
+            attributes.positions.push(vertex.to_array());
+            attributes.normals.push(normal.to_array());
+            attributes.uvs.push([u,v]);
             // color code levels for debugging
             match BranchRecursionLevel::try_from(state.recursion_count as u8).unwrap() {
                 BranchRecursionLevel::Zero => colors.push([1.0, 0.0, 0.0, 1.0]),
@@ -167,9 +170,9 @@ fn recurse_a_branch(
         } // END for each segment
     
         // duplicate of the first vertex to create a full ring (with different uv)
-        positions.push(first_pos.to_array());
-        normals.push(first_nrm.to_array());
-        uvs.push([1.0, first_v]);
+        attributes.positions.push(first_pos.to_array());
+        attributes.normals.push(first_nrm.to_array());
+        attributes.uvs.push([1.0, first_v]);
         // color code levels for debugging
         match BranchRecursionLevel::try_from(state.recursion_count as u8).unwrap() {
             BranchRecursionLevel::Zero => colors.push([1.0, 0.0, 0.0, 1.0]),
@@ -225,7 +228,7 @@ fn recurse_a_branch(
             let c: u16 = a + ring_stride;
             let d: u16 = b + ring_stride;
     
-            indices.extend_from_slice(&[a, c, b, b, c, d]);
+            attributes.indices.extend_from_slice(&[a, c, b, b, c, d]);
         }
     }    
 
@@ -247,7 +250,7 @@ fn recurse_a_branch(
                 sections: state.sections,
                 segments: state.segments,
             };
-            recurse_a_branch(settings, additional_trunk_part, rng, positions, normals, uvs, indices, colors);
+            recurse_a_branch(settings, additional_trunk_part, rng, attributes, colors);
         }
         else {
             // TODO generate leaves
@@ -265,7 +268,7 @@ fn recurse_a_branch(
             settings,
             rng
         ) {
-            recurse_a_branch(settings, child_branch_state, rng, positions, normals, uvs, indices, colors);
+            recurse_a_branch(settings, child_branch_state, rng, attributes, colors);
         }
     }
 }
@@ -344,3 +347,4 @@ fn generate_child_branches (
 
     out
 }
+
