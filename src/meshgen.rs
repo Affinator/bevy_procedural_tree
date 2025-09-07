@@ -352,10 +352,27 @@ fn generate_child_branches (
 
 
 fn generate_leaf(
+    settings: &TreeSettings,
     origin: Vec3,
     orientation: Quat,
-    rng: Rng,
+    // rotation of the leaf (in radians) around its stem
+    rotation: f32,
+    rng: &mut Rng,
     leaves_attributes: &mut MeshAttributes
 ) {
+    let indices_start = leaves_attributes.positions.len() as u16;
+
+    let leaf_size_variance = (2.0 * rng.f32() - 1.0) * settings.leaves.size_variance;
+    let leaf_size = settings.leaves.size * (1.0 + leaf_size_variance);
+    let leaf_size_half = leaf_size / 2.0;
+
+    let leaf_orientation = Quat::from_euler(EulerRot::XYX, 0.0, rotation, 0.0) * orientation;
+
+    let vertices: Vec<Vec3> = [
+        Vec3::new(-leaf_size_half, leaf_size, 0.0),
+        Vec3::new(-leaf_size_half, 0.0, 0.0),
+        Vec3::new(leaf_size_half, 0.0, 0.0),
+        Vec3::new(leaf_size_half, leaf_size, 0.0),
+    ].into_iter().map(|v| leaf_orientation * v + origin).collect();
 
 }
