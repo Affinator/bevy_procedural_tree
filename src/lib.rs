@@ -16,6 +16,7 @@ impl Plugin for TreeProceduralGenerationPlugin {
         app.init_resource::<TreeSettings>();
         app.register_type::<TreeSettings>();
         app.register_type::<Tree>();
+        app.register_type::<TreeTextureSettings>();
         app.register_type::<Leaves>();
 
         app.add_systems(PostUpdate, update_tree.run_if(resource_changed::<TreeSettings>));
@@ -25,8 +26,15 @@ impl Plugin for TreeProceduralGenerationPlugin {
 
 
 #[derive(Component, Reflect)]
+#[require(TreeTextureSettings)]
 #[component(on_add = new_tree_component_added)]
 pub struct Tree;
+
+#[derive(Component, Reflect, Default)]
+pub struct TreeTextureSettings {
+    pub bark_texture: Option<MeshMaterial3d<StandardMaterial>>,
+    pub leaf_texture: Option<MeshMaterial3d<StandardMaterial>>
+}
 
 #[derive(Component, Reflect)]
 struct Leaves(Entity);

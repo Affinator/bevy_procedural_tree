@@ -5,6 +5,7 @@
     - Implement "growing"
     - allow creating multiple trees
     - allow managing tree generation
+    - TODO how to generalize bark and leaf materials (to not force StandardMaterial)
 
 # Misc:
 - resolution (LOD) of meshes should be flexible

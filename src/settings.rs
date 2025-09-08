@@ -7,7 +7,7 @@ use bevy::prelude::*;
 #[cfg(feature="inspector")]
 use bevy_inspector_egui::prelude::*;
 
-use crate::enums::{BarkType, LeafBillboard, LeafType, TreeType};
+use crate::enums::{LeafBillboard, TreeType};
 
 
 #[cfg(feature="inspector")]
@@ -36,7 +36,7 @@ pub struct TreeSettings {
 
 impl Default for TreeSettings {
     fn default() -> Self {
-        Self {
+        Self {            
             seed: 0,
             tree_type: TreeType::Deciduous,
             bark: BarkParams::default(),
@@ -53,7 +53,6 @@ impl Default for TreeSettings {
 
 #[derive(Reflect, Debug, Clone, PartialEq)]
 pub struct BarkParams {
-    pub bark_type: BarkType,  
     pub tint: Color,
     pub flat_shading: bool,
     pub textured: bool,
@@ -63,7 +62,6 @@ pub struct BarkParams {
 impl Default for BarkParams {
     fn default() -> Self {
         Self {
-            bark_type: BarkType::Oak,
             tint: Color::WHITE,
             flat_shading: false,
             textured: true,
@@ -213,8 +211,6 @@ impl Default for BranchParams {
  */
 #[derive(Reflect, Debug, Clone, PartialEq)]
 pub struct LeafParams {
-    /// leaf texture to use
-    pub leaf_type: LeafType,
     /// single or double/perpendicular
     pub leaf_billboard: LeafBillboard,
     /// angle of leaves relative to parent branch/trunk in degrees
@@ -236,7 +232,6 @@ pub struct LeafParams {
 impl Default for LeafParams {
     fn default() -> Self {
         Self {
-            leaf_type: LeafType::Oak,
             leaf_billboard: LeafBillboard::Double,
             angle: 10.0,
             count: 1,
