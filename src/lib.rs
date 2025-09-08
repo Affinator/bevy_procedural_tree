@@ -90,7 +90,6 @@ fn update_tree(
     // TODO: Try to modify in place (or at least only branch/leaf levels that need modification)
     let mut rng: Rng = Rng::with_seed(tree_settings.seed);
 
-
     for (tree_entity, leaves_entity) in trees.iter() {
         let (branches_mesh, leaves_mesh) = generate_tree(&tree_settings, &mut rng);
         let branches_mesh = Mesh3d(meshes.add(branches_mesh));

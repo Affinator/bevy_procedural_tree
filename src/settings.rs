@@ -225,7 +225,7 @@ pub struct LeafParams {
     pub start: f32,
     /// average size of leaves
     pub size: f32,
-    /// variance of leaf sizes 
+    /// variance of leaf sizes (negative values are ignored)
     pub size_variance: f32,
     /// tint color for leaves
     pub tint: Color,
@@ -242,7 +242,7 @@ impl Default for LeafParams {
             count: 1,
             start: 0.0,
             size: 0.25,
-            size_variance: 0.7,
+            size_variance: 0.4,
             tint: Color::WHITE,
             alpha_test: 0.5,
         }

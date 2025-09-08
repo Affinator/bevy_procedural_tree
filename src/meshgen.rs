@@ -368,7 +368,7 @@ fn generate_leaf(
 ) {
     let mut indices_start = leaves_attributes.positions.len() as u16;
 
-    let leaf_size_variance = (2.0 * rng.f32() - 1.0) * settings.leaves.size_variance;
+    let leaf_size_variance = (2.0 * rng.f32() - 1.0) * settings.leaves.size_variance.max(0.0);
     let leaf_size = settings.leaves.size * (1.0 + leaf_size_variance);
     let leaf_size_half = leaf_size / 2.0;
 
