@@ -241,7 +241,7 @@ impl Default for LeafParams {
             angle: 10.0,
             count: 1,
             start: 0.0,
-            size: 2.5,
+            size: 0.25,
             size_variance: 0.7,
             tint: Color::WHITE,
             alpha_test: 0.5,

@@ -262,7 +262,7 @@ fn recurse_a_branch(
         }
         else {
             // generate a nice leaf at the top
-            generate_leaf(settings, section_origin, section_orientation, 0.0, rng, leaves_attributes);
+            generate_leaf(settings, section_origin, section_orientation, rng, leaves_attributes);
         }
     }
 
@@ -363,37 +363,46 @@ fn generate_leaf(
     origin: Vec3,
     orientation: Quat,
     // rotation of the leaf (in radians) around its stem
-    rotation: f32,
     rng: &mut Rng,
     leaves_attributes: &mut MeshAttributes
 ) {
-    let indices_start = leaves_attributes.positions.len() as u16;
+    let mut indices_start = leaves_attributes.positions.len() as u16;
 
     let leaf_size_variance = (2.0 * rng.f32() - 1.0) * settings.leaves.size_variance;
     let leaf_size = settings.leaves.size * (1.0 + leaf_size_variance);
     let leaf_size_half = leaf_size / 2.0;
 
-    let leaf_orientation = Quat::from_euler(EulerRot::XYX, 0.0, rotation, 0.0) * orientation;
+    let rotations: &[f32] = match settings.leaves.leaf_billboard {
+        crate::enums::LeafBillboard::Single => &[0.0],
+        crate::enums::LeafBillboard::Double => &[0.0, f32::consts::FRAC_PI_2],
+    };
 
-    // vertice positions
-    let vertices: Vec<[f32;3]> = [
+    for rotation in rotations.iter() {
+        let leaf_orientation = orientation * Quat::from_euler(EulerRot::XYX, 0.0, *rotation, 0.0);
+
+        // vertice positions
+        let vertices: Vec<[f32;3]> = [
         Vec3::new(-leaf_size_half, leaf_size, 0.0),
         Vec3::new(-leaf_size_half, 0.0, 0.0),
         Vec3::new(leaf_size_half, 0.0, 0.0),
         Vec3::new(leaf_size_half, leaf_size, 0.0),
-    ].into_iter().map(|v| (leaf_orientation * v + origin).to_array()).collect();
+        ].into_iter().map(|v| (leaf_orientation * v + origin).to_array()).collect();
 
-    leaves_attributes.positions.extend_from_slice(&vertices);
+        leaves_attributes.positions.extend_from_slice(&vertices);
 
-    // vertice normals
-    let normal: [f32;3] = (leaf_orientation * Vec3::new(0.0, 0.0, 1.0)).to_array();
+        // vertice normals
+        let normal: [f32;3] = (leaf_orientation * Vec3::new(0.0, 0.0, 1.0)).to_array();
 
-    leaves_attributes.normals.push(normal);
-    leaves_attributes.normals.push(normal);
-    leaves_attributes.normals.push(normal);
-    leaves_attributes.normals.push(normal);
+        leaves_attributes.normals.push(normal);
+        leaves_attributes.normals.push(normal);
+        leaves_attributes.normals.push(normal);
+        leaves_attributes.normals.push(normal);
 
-    // uvs and indices
-    leaves_attributes.uvs.extend_from_slice(&[[0.0, 1.0],[0.0, 0.0],[1.0, 0.0],[1.0, 1.0]]);
-    leaves_attributes.indices.extend_from_slice(&[indices_start, indices_start+1, indices_start+2, indices_start+3]);
+        // uvs and indices
+        leaves_attributes.uvs.extend_from_slice(&[[0.0, 1.0],[0.0, 0.0],[1.0, 0.0],[1.0, 1.0]]);
+        leaves_attributes.indices.extend_from_slice(&[indices_start, indices_start+1, indices_start+2, indices_start, indices_start+2, indices_start+3]);
+        indices_start += 4;
+    }
+
+
 }
