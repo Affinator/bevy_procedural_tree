@@ -6,7 +6,7 @@ mod meshgen;
 use bevy::{ecs::{component::HookContext, world::DeferredWorld}, prelude::*};
 use fastrand::Rng;
 
-use crate::{meshgen::generate_branches, settings::TreeSettings};
+use crate::{meshgen::generate_tree, settings::TreeSettings};
 
 
 pub struct TreeProceduralGenerationPlugin;
@@ -15,6 +15,8 @@ impl Plugin for TreeProceduralGenerationPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<TreeSettings>();
         app.register_type::<TreeSettings>();
+        app.register_type::<Tree>();
+        app.register_type::<Leaves>();
 
         app.add_systems(PostUpdate, update_tree.run_if(resource_changed::<TreeSettings>));
     }
@@ -26,6 +28,9 @@ impl Plugin for TreeProceduralGenerationPlugin {
 #[component(on_add = new_tree_component_added)]
 pub struct Tree;
 
+#[derive(Component, Reflect)]
+struct Leaves(Entity);
+
 fn new_tree_component_added(mut world: DeferredWorld, context: HookContext) {
     info!("New tree component added to entity");
     let tree_entity = context.entity;
@@ -35,30 +40,47 @@ fn new_tree_component_added(mut world: DeferredWorld, context: HookContext) {
     let settings = world.get_resource::<TreeSettings>().unwrap();
     let settings: TreeSettings = settings.clone();
     let mut rng: Rng = Rng::with_seed(settings.seed);
-    let branches_mesh = generate_branches(&settings, &mut rng);
+    let (branches_mesh, leaves_mesh) = generate_tree(&settings, &mut rng);
     
-    // Add to AssetServer
+    // retrieve AssetServer
     let mut meshes = world.get_resource_mut::<Assets<Mesh>>().unwrap();
-    let mesh = Mesh3d(meshes.add(branches_mesh));
+
+    // meshes
+    let branches_mesh = Mesh3d(meshes.add(branches_mesh));
+    let leaves_mesh = Mesh3d(meshes.add(leaves_mesh));
+
+    // materials
     let mut materials = world.get_resource_mut::<Assets<StandardMaterial>>().unwrap();
-    let mut material = StandardMaterial::from(Color::WHITE);
-    material.cull_mode = None;
-    let mesh_material = MeshMaterial3d(materials.add(material));
+    let mut branch_material = StandardMaterial::from(Color::WHITE);
+    branch_material.cull_mode = None;
+    let mut leaves_material = StandardMaterial::from(Color::LinearRgba(LinearRgba { red: 0.0, green: 1.0, blue: 0.0, alpha: 1.0 }));
+    leaves_material.cull_mode = None;
+    let branch_material = MeshMaterial3d(materials.add(branch_material));
+    let leaves_material = MeshMaterial3d(materials.add(leaves_material));
+
 
     // Spawn/Insert
     let mut commands = world.commands();
+    let leaves_id = commands.spawn((
+        Name::new("ProcGenTreeLeaves"),
+        leaves_mesh,
+        leaves_material,
+    )).id();
+
     let mut tree_commands = commands.entity(tree_entity);
+        
     tree_commands.insert((
-        Name::new("ProcGenTree"),
-        mesh,
-        mesh_material,
+        Name::new("ProcGenTreeBranches"),
+        Leaves(leaves_id),
+        branches_mesh,
+        branch_material,
         settings
-    ));
+    )).add_child(leaves_id);
 
 }
 
 fn update_tree(
-    trees: Query<Entity, With<Tree>>,
+    trees: Query<(Entity, &Leaves), With<Tree>>,
     tree_settings: Res<TreeSettings>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut commands: Commands,
@@ -67,9 +89,15 @@ fn update_tree(
     // For now we are regenerating the tree each time 
     // TODO: Try to modify in place (or at least only branch/leaf levels that need modification)
     let mut rng: Rng = Rng::with_seed(tree_settings.seed);
-    let branches_mesh = generate_branches(&tree_settings, &mut rng);
 
-    let mesh = Mesh3d(meshes.add(branches_mesh));
 
-    commands.entity(trees.single().unwrap()).insert(mesh);
+    for (tree_entity, leaves_entity) in trees.iter() {
+        let (branches_mesh, leaves_mesh) = generate_tree(&tree_settings, &mut rng);
+        let branches_mesh = Mesh3d(meshes.add(branches_mesh));
+        let leaves_mesh = Mesh3d(meshes.add(leaves_mesh));
+
+        commands.entity(tree_entity).insert(branches_mesh);
+        commands.entity(leaves_entity.0).insert(leaves_mesh);
+    }
+
 }

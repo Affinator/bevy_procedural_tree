@@ -36,7 +36,7 @@ struct MeshAttributes {
     indices: Vec<u16>
 }
 
-pub(crate) fn generate_branches(settings: &TreeSettings, rng: &mut Rng) -> Mesh { 
+pub(crate) fn generate_tree(settings: &TreeSettings, rng: &mut Rng) -> (Mesh, Mesh) { 
     let state: BranchGenState = BranchGenState {
         origin: Vec3::ZERO,
         orientation: Quat::IDENTITY,
@@ -53,7 +53,7 @@ pub(crate) fn generate_branches(settings: &TreeSettings, rng: &mut Rng) -> Mesh 
     generate_branches_internal(settings, state, rng)
 }
 
-fn generate_branches_internal(settings: &TreeSettings, state: BranchGenState, rng: &mut Rng) -> Mesh { 
+fn generate_branches_internal(settings: &TreeSettings, state: BranchGenState, rng: &mut Rng) -> (Mesh, Mesh) { 
     // Allocate mesh attributes
     // TODO allocate just enough to reduce reallocations
     let mut branches_attributes: MeshAttributes = MeshAttributes::default();
@@ -62,15 +62,21 @@ fn generate_branches_internal(settings: &TreeSettings, state: BranchGenState, rn
 
     recurse_a_branch(settings, state, rng, &mut branches_attributes, &mut branches_colors, &mut leaves_attributes);
     
-    // build mesh
-    let mut mesh = Mesh::new(PrimitiveTopology::TriangleList, RenderAssetUsages::MAIN_WORLD | RenderAssetUsages::RENDER_WORLD);
-    mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, branches_attributes.positions);
-    mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, branches_attributes.normals);
-    mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, branches_attributes.uvs);
-    mesh.insert_indices(Indices::U16(branches_attributes.indices));
-    mesh.insert_attribute(Mesh::ATTRIBUTE_COLOR, branches_colors);
+    // build meshes
+    let mut branches_mesh = Mesh::new(PrimitiveTopology::TriangleList, RenderAssetUsages::MAIN_WORLD | RenderAssetUsages::RENDER_WORLD);
+    branches_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, branches_attributes.positions);
+    branches_mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, branches_attributes.normals);
+    branches_mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, branches_attributes.uvs);
+    branches_mesh.insert_indices(Indices::U16(branches_attributes.indices));
+    branches_mesh.insert_attribute(Mesh::ATTRIBUTE_COLOR, branches_colors);
 
-    mesh
+    let mut leaves_mesh = Mesh::new(PrimitiveTopology::TriangleList, RenderAssetUsages::MAIN_WORLD | RenderAssetUsages::RENDER_WORLD);
+    leaves_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, leaves_attributes.positions);
+    leaves_mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, leaves_attributes.normals);
+    leaves_mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, leaves_attributes.uvs);
+    leaves_mesh.insert_indices(Indices::U16(leaves_attributes.indices));
+
+    (branches_mesh, leaves_mesh)
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -255,7 +261,8 @@ fn recurse_a_branch(
             recurse_a_branch(settings, additional_trunk_part, rng, branches_attributes, branches_colors, leaves_attributes);
         }
         else {
-            // TODO generate leaves
+            // generate a nice leaf at the top
+            generate_leaf(settings, section_origin, section_orientation, 0.0, rng, leaves_attributes);
         }
     }
 
@@ -368,11 +375,25 @@ fn generate_leaf(
 
     let leaf_orientation = Quat::from_euler(EulerRot::XYX, 0.0, rotation, 0.0) * orientation;
 
-    let vertices: Vec<Vec3> = [
+    // vertice positions
+    let vertices: Vec<[f32;3]> = [
         Vec3::new(-leaf_size_half, leaf_size, 0.0),
         Vec3::new(-leaf_size_half, 0.0, 0.0),
         Vec3::new(leaf_size_half, 0.0, 0.0),
         Vec3::new(leaf_size_half, leaf_size, 0.0),
-    ].into_iter().map(|v| leaf_orientation * v + origin).collect();
+    ].into_iter().map(|v| (leaf_orientation * v + origin).to_array()).collect();
 
+    leaves_attributes.positions.extend_from_slice(&vertices);
+
+    // vertice normals
+    let normal: [f32;3] = (leaf_orientation * Vec3::new(0.0, 0.0, 1.0)).to_array();
+
+    leaves_attributes.normals.push(normal);
+    leaves_attributes.normals.push(normal);
+    leaves_attributes.normals.push(normal);
+    leaves_attributes.normals.push(normal);
+
+    // uvs and indices
+    leaves_attributes.uvs.extend_from_slice(&[[0.0, 1.0],[0.0, 0.0],[1.0, 0.0],[1.0, 1.0]]);
+    leaves_attributes.indices.extend_from_slice(&[indices_start, indices_start+1, indices_start+2, indices_start+3]);
 }
