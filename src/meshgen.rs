@@ -4,7 +4,7 @@ use std::f32::consts::PI;
 use bevy::{asset::RenderAssetUsages, prelude::*, render::mesh::{Indices, PrimitiveTopology}};
 use fastrand::Rng;
 
-use crate::{enums::TreeType, settings::{BranchRecursionLevel, TreeSettings}};
+use crate::{enums::TreeType, settings::TreeSettings};
 
 #[derive(Debug, Clone)]
 struct BranchGenState {
@@ -58,9 +58,9 @@ fn generate_branches_internal(settings: &TreeSettings, state: BranchGenState, rn
     // TODO allocate just enough to reduce reallocations
     let mut branches_attributes: MeshAttributes = MeshAttributes::default();
     let mut leaves_attributes: MeshAttributes = MeshAttributes::default();
-    let mut branches_colors:    Vec<[f32; 4]> = Vec::new(); //with_capacity(rings * ring_stride);
+    //let mut branches_colors:    Vec<[f32; 4]> = Vec::new(); //with_capacity(rings * ring_stride);
 
-    recurse_a_branch(settings, state, rng, &mut branches_attributes, &mut branches_colors, &mut leaves_attributes);
+    recurse_a_branch(settings, state, rng, &mut branches_attributes, &mut leaves_attributes);
     
     // build meshes
     let mut branches_mesh = Mesh::new(PrimitiveTopology::TriangleList, RenderAssetUsages::MAIN_WORLD | RenderAssetUsages::RENDER_WORLD);
@@ -68,7 +68,7 @@ fn generate_branches_internal(settings: &TreeSettings, state: BranchGenState, rn
     branches_mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, branches_attributes.normals);
     branches_mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, branches_attributes.uvs);
     branches_mesh.insert_indices(Indices::U16(branches_attributes.indices));
-    branches_mesh.insert_attribute(Mesh::ATTRIBUTE_COLOR, branches_colors);
+    //branches_mesh.insert_attribute(Mesh::ATTRIBUTE_COLOR, branches_colors);
 
     let mut leaves_mesh = Mesh::new(PrimitiveTopology::TriangleList, RenderAssetUsages::MAIN_WORLD | RenderAssetUsages::RENDER_WORLD);
     leaves_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, leaves_attributes.positions);
@@ -85,7 +85,7 @@ fn recurse_a_branch(
     state: BranchGenState,
     rng: &mut Rng,
     branches_attributes: &mut MeshAttributes,
-    branches_colors: &mut Vec<[f32; 4]>,
+    //branches_colors: &mut Vec<[f32; 4]>,
     leaves_attributes: &mut MeshAttributes
 ) 
 {       
@@ -167,13 +167,13 @@ fn recurse_a_branch(
             branches_attributes.normals.push(normal.to_array());
             branches_attributes.uvs.push([u,v]);
             // color code levels for debugging
-            match BranchRecursionLevel::try_from(state.recursion_count as u8).unwrap() {
-                BranchRecursionLevel::Zero => branches_colors.push([1.0, 0.0, 0.0, 1.0]),
-                BranchRecursionLevel::One => branches_colors.push([0.0, 1.0, 0.0, 1.0]),
-                BranchRecursionLevel::Two => branches_colors.push([0.0, 0.0, 1.0, 1.0]),
-                BranchRecursionLevel::Three => branches_colors.push([0.0, 1.0, 1.0, 1.0]),
-                //BranchRecursionLevel::Four => colors.push([1.0, 1.0, 1.0, 1.0]),
-            }
+            // match BranchRecursionLevel::try_from(state.recursion_count as u8).unwrap() {
+            //     BranchRecursionLevel::Zero => branches_colors.push([1.0, 0.0, 0.0, 1.0]),
+            //     BranchRecursionLevel::One => branches_colors.push([0.0, 1.0, 0.0, 1.0]),
+            //     BranchRecursionLevel::Two => branches_colors.push([0.0, 0.0, 1.0, 1.0]),
+            //     BranchRecursionLevel::Three => branches_colors.push([0.0, 1.0, 1.0, 1.0]),
+            //     //BranchRecursionLevel::Four => colors.push([1.0, 1.0, 1.0, 1.0]),
+            // }
             
         } // END for each segment
     
@@ -182,13 +182,13 @@ fn recurse_a_branch(
         branches_attributes.normals.push(first_nrm.to_array());
         branches_attributes.uvs.push([1.0, first_v]);
         // color code levels for debugging
-        match BranchRecursionLevel::try_from(state.recursion_count as u8).unwrap() {
-            BranchRecursionLevel::Zero => branches_colors.push([1.0, 0.0, 0.0, 1.0]),
-            BranchRecursionLevel::One => branches_colors.push([0.0, 1.0, 0.0, 1.0]),
-            BranchRecursionLevel::Two => branches_colors.push([0.0, 0.0, 1.0, 1.0]),
-            BranchRecursionLevel::Three => branches_colors.push([0.0, 1.0, 1.0, 1.0]),
-            //BranchRecursionLevel::Four => colors.push([1.0, 1.0, 1.0, 1.0]),
-        }
+        // match BranchRecursionLevel::try_from(state.recursion_count as u8).unwrap() {
+        //     BranchRecursionLevel::Zero => branches_colors.push([1.0, 0.0, 0.0, 1.0]),
+        //     BranchRecursionLevel::One => branches_colors.push([0.0, 1.0, 0.0, 1.0]),
+        //     BranchRecursionLevel::Two => branches_colors.push([0.0, 0.0, 1.0, 1.0]),
+        //     BranchRecursionLevel::Three => branches_colors.push([0.0, 1.0, 1.0, 1.0]),
+        //     //BranchRecursionLevel::Four => colors.push([1.0, 1.0, 1.0, 1.0]),
+        // }
     
         // save section data for later allow branches to grow from them
         sections.push(SectionData {
@@ -258,16 +258,18 @@ fn recurse_a_branch(
                 sections: state.sections,
                 segments: state.segments,
             };
-            recurse_a_branch(settings, additional_trunk_part, rng, branches_attributes, branches_colors, leaves_attributes);
+            recurse_a_branch(settings, additional_trunk_part, rng, branches_attributes, leaves_attributes);
         }
         else {
-            // generate a nice leaf at the top
+            // generate a nice single leaf at the top
             generate_leaf(settings, section_origin, section_orientation, rng, leaves_attributes);
         }
     }
 
     if state.recursion_count == settings.branch.levels as usize {
-        // TODO generate leaves
+        // generate leaves at the different sections of this branch
+        // state.level is constant in this case, we keep it as a parameter for possible future functionality
+        generate_leaves(&sections, state.recursion_count, settings, rng, leaves_attributes);
     }
     else {
         for child_branch_state in generate_child_branches(
@@ -277,7 +279,7 @@ fn recurse_a_branch(
             settings,
             rng
         ) {
-            recurse_a_branch(settings, child_branch_state, rng, branches_attributes, branches_colors, leaves_attributes);
+            recurse_a_branch(settings, child_branch_state, rng, branches_attributes, leaves_attributes);
         }
     }
 }
@@ -357,12 +359,53 @@ fn generate_child_branches (
     out
 }
 
+fn generate_leaves(
+    sections: &[SectionData],
+    level: usize,
+    settings: &TreeSettings,
+    rng: &mut Rng,
+    leaves_attributes: &mut MeshAttributes
+)
+{
+    let radial_offset: f32 = rng.f32();
+    let section_count_minus_one: usize = sections.len().saturating_sub(1);  
+
+    for i in 0..settings.leaves.count {
+        // how far along the section should this leaf start
+        let leaf_start = f32::lerp(settings.leaves.start, 1.0, rng.f32());
+
+        // find relevant sections depending on leaf_start
+        let leaf_pos = leaf_start * section_count_minus_one as f32;
+        let section_index = leaf_pos.floor() as usize;
+        let leaf_height_factor = (leaf_pos - section_index as f32).clamp(0.0, 1.0);
+
+        // calculate target sections where to place the leaf
+        let section_a_index = section_index; 
+        let section_b_index = (section_index + 1).min(section_count_minus_one);
+        let section_a = &sections[section_a_index];
+        let section_b = &sections[section_b_index];
+
+        // interpolate the placement between section a and b
+        let leaf_origin = section_a.origin.lerp(section_b.origin, leaf_height_factor);
+
+        // interpolate the orientation; orient along the parent sections
+        let parent_orientation = section_b.orientation.slerp(section_a.orientation, leaf_height_factor);
+
+        // calculate needed angles 
+        let radial_angle = 2.0 * std::f32::consts::PI * (radial_offset + (i as f32) / (settings.leaves.count as f32));
+        let angle_rad = settings.branch.angle[level].to_radians();
+        let q1 = Quat::from_axis_angle(Vec3::X, angle_rad);
+        let q2 = Quat::from_axis_angle(Vec3::Y, radial_angle);
+        let child_quat = parent_orientation * q2 * q1;
+
+        generate_leaf(settings, leaf_origin, child_quat, rng, leaves_attributes);
+    }
+}
 
 fn generate_leaf(
     settings: &TreeSettings,
     origin: Vec3,
     orientation: Quat,
-    // rotation of the leaf (in radians) around its stem
     rng: &mut Rng,
     leaves_attributes: &mut MeshAttributes
 ) {
