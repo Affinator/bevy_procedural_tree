@@ -18,7 +18,9 @@ impl Plugin for TreeProceduralGenerationPlugin {
         app.register_type::<Tree>();
         app.register_type::<Leaves>();
 
-        app.add_systems(PostUpdate, update_tree.run_if(resource_changed::<TreeMeshSettings>));
+        app.add_systems(PostUpdate, update_all_tree_meshes_with_global_settings.run_if(resource_changed::<TreeMeshSettings>));
+        app.add_systems(PostUpdate, update_all_tree_meshes_with_local_settings);
+        app.add_systems(PostUpdate, update_all_tree_textures_when_changed);
     }
 }
 
@@ -28,6 +30,7 @@ impl Plugin for TreeProceduralGenerationPlugin {
 #[component(on_add = new_tree_component_added)]
 pub struct Tree {
     /// the seed for the rng (same seed and TreeMeshSettings = same tree mesh)
+    /// the seed is always local to each tree instance (regardless if the tree is using global TreeMeshSettings)
     pub seed: u64,
     /// the settings to use for this tree; if set to none the settings from the global TreeMeshSettings resource are used
     pub tree_mesh_settings: Option<TreeMeshSettings>,
@@ -103,24 +106,54 @@ fn new_tree_component_added(mut world: DeferredWorld, context: HookContext) {
 
 }
 
-fn update_tree(
+fn update_all_tree_textures_when_changed() {
+
+}
+
+fn update_all_tree_meshes_with_local_settings(
+    trees: Query<(Entity, &Tree, &Leaves), Changed<Tree>>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    global_tree_settings: Res<TreeMeshSettings>,
+    mut commands: Commands,
+)
+{
+    // For now we are regenerating the whole tree mesh each time 
+    // TODO: Try to modify in place (or at least only branch/leaf levels or textures that need modification)
+    for (tree_entity, tree, leaves_entity) in trees.iter() {
+        let tree_settings: &TreeMeshSettings = match tree.tree_mesh_settings {
+            Some(ref tree_settings) => tree_settings,
+            None => global_tree_settings.as_ref(),
+        };        
+        
+        let mut rng: Rng = Rng::with_seed(tree.seed);
+        let (branches_mesh, leaves_mesh) = generate_tree(tree_settings, &mut rng);
+        let branches_mesh = Mesh3d(meshes.add(branches_mesh));
+        let leaves_mesh = Mesh3d(meshes.add(leaves_mesh));
+
+        commands.entity(tree_entity).insert(branches_mesh);
+        commands.entity(leaves_entity.0).insert(leaves_mesh);        
+    }
+}
+
+fn update_all_tree_meshes_with_global_settings(
     trees: Query<(Entity, &Tree, &Leaves)>,
     tree_settings: Res<TreeMeshSettings>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut commands: Commands,
 ) {
-    info!("Updating trees, due to changed TreeSettings...");
-    // For now we are regenerating the tree each time 
+    // For now we are regenerating the whole tree mesh each time 
     // TODO: Try to modify in place (or at least only branch/leaf levels or textures that need modification)
 
     for (tree_entity, tree, leaves_entity) in trees.iter() {
-        let mut rng: Rng = Rng::with_seed(tree.seed);
-        let (branches_mesh, leaves_mesh) = generate_tree(&tree_settings, &mut rng);
-        let branches_mesh = Mesh3d(meshes.add(branches_mesh));
-        let leaves_mesh = Mesh3d(meshes.add(leaves_mesh));
+        if tree.tree_mesh_settings.is_none() {
+            let mut rng: Rng = Rng::with_seed(tree.seed);
+            let (branches_mesh, leaves_mesh) = generate_tree(&tree_settings, &mut rng);
+            let branches_mesh = Mesh3d(meshes.add(branches_mesh));
+            let leaves_mesh = Mesh3d(meshes.add(leaves_mesh));
 
-        commands.entity(tree_entity).insert(branches_mesh);
-        commands.entity(leaves_entity.0).insert(leaves_mesh);
+            commands.entity(tree_entity).insert(branches_mesh);
+            commands.entity(leaves_entity.0).insert(leaves_mesh);
+        }
     }
 
 }
