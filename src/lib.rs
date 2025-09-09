@@ -15,12 +15,13 @@ impl Plugin for TreeProceduralGenerationPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<TreeMeshSettings>();
         app.register_type::<TreeMeshSettings>();
+        app.init_resource::<TreeDefaultTextures>();
+        app.register_type::<TreeDefaultTextures>();
         app.register_type::<Tree>();
         app.register_type::<Leaves>();
 
         app.add_systems(PostUpdate, update_all_tree_meshes_with_global_settings.run_if(resource_changed::<TreeMeshSettings>));
         app.add_systems(PostUpdate, update_all_tree_meshes_with_local_settings);
-        app.add_systems(PostUpdate, update_all_tree_textures_when_changed);
     }
 }
 
@@ -41,6 +42,25 @@ pub struct Tree {
     pub leaf_material: Option<MeshMaterial3d<StandardMaterial>>,
 }
 
+
+#[derive(Resource, Reflect)]
+struct TreeDefaultTextures {
+    /// defaults to Color::WHITE
+    pub bark_material: MeshMaterial3d<StandardMaterial>,
+    /// defaults to green -> Color::LinearRgba(LinearRgba { red: 0.0, green: 1.0, blue: 0.0, alpha: 1.0 }
+    /// recommendation: AlphaMode::Mask(0.x) is recommend to be set for the leaves (depending on the texture used)
+    pub leaf_material: MeshMaterial3d<StandardMaterial>,
+}
+
+impl FromWorld for TreeDefaultTextures {
+    fn from_world(world: &mut World) -> Self {        
+        let mut materials = world.get_resource_mut::<Assets<StandardMaterial>>().unwrap();
+        Self {
+            bark_material: MeshMaterial3d(materials.add(Color::WHITE)),
+            leaf_material: MeshMaterial3d(materials.add(Color::LinearRgba(LinearRgba { red: 0.0, green: 1.0, blue: 0.0, alpha: 1.0 })))
+        }
+    }
+}
 
 #[derive(Component, Reflect)]
 struct Leaves(Entity);
@@ -68,24 +88,11 @@ fn new_tree_component_added(mut world: DeferredWorld, context: HookContext) {
     let branches_mesh = Mesh3d(meshes.add(branches_mesh));
     let leaves_mesh = Mesh3d(meshes.add(leaves_mesh));
 
-    let mut materials = world.get_resource_mut::<Assets<StandardMaterial>>().unwrap();
+    let default_materials = world.get_resource::<TreeDefaultTextures>().unwrap();
     // bark material
-    let branch_material = tree.bark_material.clone().or_else(
-        || {
-            let mut material = StandardMaterial::from(Color::WHITE);
-            material.cull_mode = None;
-            Some(MeshMaterial3d(materials.add(material)))
-        }
-    ).unwrap();
+    let branch_material = tree.bark_material.clone().unwrap_or_else(|| default_materials.bark_material.clone());
     // leaf material
-    let leaf_material = tree.leaf_material.clone().or_else(
-        || {
-            let mut material = StandardMaterial::from(Color::LinearRgba(LinearRgba { red: 0.0, green: 1.0, blue: 0.0, alpha: 1.0 }));
-            material.cull_mode = None;
-            material.alpha_mode = AlphaMode::Mask(0.5);
-            Some(MeshMaterial3d(materials.add(material)))
-        }
-    ).unwrap();
+    let leaf_material = tree.leaf_material.clone().unwrap_or_else(|| default_materials.leaf_material.clone());
 
     // Spawn/Insert
     let mut commands = world.commands();
@@ -106,20 +113,19 @@ fn new_tree_component_added(mut world: DeferredWorld, context: HookContext) {
 
 }
 
-fn update_all_tree_textures_when_changed() {
-
-}
 
 fn update_all_tree_meshes_with_local_settings(
-    trees: Query<(Entity, &Tree, &Leaves), Changed<Tree>>,
+    trees: Query<(Entity, &Tree, &MeshMaterial3d<StandardMaterial>, &Leaves), Changed<Tree>>,
+    mesh_materials: Query<&MeshMaterial3d<StandardMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>,
     global_tree_settings: Res<TreeMeshSettings>,
+    default_materials: Res<TreeDefaultTextures>,
     mut commands: Commands,
 )
 {
     // For now we are regenerating the whole tree mesh each time 
     // TODO: Try to modify in place (or at least only branch/leaf levels or textures that need modification)
-    for (tree_entity, tree, leaves_entity) in trees.iter() {
+    for (tree_entity, tree, current_bark_material, leaves_entity) in trees.iter() {
         let tree_settings: &TreeMeshSettings = match tree.tree_mesh_settings {
             Some(ref tree_settings) => tree_settings,
             None => global_tree_settings.as_ref(),
@@ -132,6 +138,35 @@ fn update_all_tree_meshes_with_local_settings(
 
         commands.entity(tree_entity).insert(branches_mesh);
         commands.entity(leaves_entity.0).insert(leaves_mesh);        
+
+        // check if the textures changed
+        match tree.bark_material { // what is the target state of the bark material
+            Some(ref bark_material_from_local_settings) => {
+                if !current_bark_material.eq(bark_material_from_local_settings) {
+                    commands.entity(tree_entity).insert(bark_material_from_local_settings.clone());
+                }
+            },
+            None => {
+                if !current_bark_material.eq(&default_materials.bark_material) {
+                    commands.entity(tree_entity).insert(default_materials.bark_material.clone());
+                }
+            },
+        }
+
+        if let Ok(current_leaf_material) = mesh_materials.get(leaves_entity.0) {
+            match tree.leaf_material { // what is the target state of the leaf material
+                Some(ref leaf_material_from_local_settings) => {
+                    if !current_leaf_material.eq(leaf_material_from_local_settings) {
+                        commands.entity(leaves_entity.0).insert(leaf_material_from_local_settings.clone());
+                    }
+                },
+                None => {
+                    if !current_leaf_material.eq(&default_materials.leaf_material) {
+                        commands.entity(leaves_entity.0).insert(default_materials.leaf_material.clone());
+                    }
+                },
+            }
+        }
     }
 }
 
