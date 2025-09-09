@@ -303,7 +303,7 @@ fn generate_child_branches (
     let mut out = Vec::with_capacity(count as usize);
     for i in 0..count {
         // lowest start position along the parent branch as a factor
-        let child_start_factor = f32::lerp(settings.branch.start[level], 1.0, rng.f32());
+        let child_start_factor = f32::lerp(settings.branch.start[level].clamp(0.0, 1.0), 1.0, rng.f32());
 
         // calculate a factor between two sections based on the possible range
         let child_branch_pos = child_start_factor * section_count_minus_one as f32;
