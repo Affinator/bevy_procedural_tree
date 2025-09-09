@@ -66,7 +66,6 @@ impl FromWorld for TreeDefaultTextures {
 struct Leaves(Entity);
 
 fn new_tree_component_added(mut world: DeferredWorld, context: HookContext) {
-    info!("New tree component added to entity");
     let tree_entity = context.entity;
 
     // Generate meshes
