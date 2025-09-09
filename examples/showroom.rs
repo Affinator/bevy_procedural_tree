@@ -29,6 +29,7 @@ fn main() {
 /// set up a simple 3D scene
 fn setup(
     mut commands: Commands,
+    asset_server: Res<AssetServer>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
@@ -65,10 +66,32 @@ fn setup(
     ));
 
     // tree
-    let bark_material = Some(MeshMaterial3d(materials.add(Color::LinearRgba(LinearRgba { red: 0.5, green: 1.0, blue: 0.5, alpha: 1.0 }))));
-    let leaf_material = Some(MeshMaterial3d(materials.add(Color::LinearRgba(LinearRgba { red: 0.2, green: 0.8, blue: 0.2, alpha: 0.9 }))));
+    let bark_texture_color: Handle<Image> = asset_server.load("textures/bark_willow/color.png");
+    let bark_texture_normal: Handle<Image> = asset_server.load("textures/bark_willow/normal_gl.png");
+    let bark_material = Some(MeshMaterial3d(materials.add(
+        StandardMaterial {
+            base_color_texture: Some(bark_texture_color),
+            normal_map_texture: Some(bark_texture_normal),
+            cull_mode: None, // show bark from both sides
+            ..Default::default()
+        }
+    )));
+
+    let leaf_texture_color: Handle<Image> = asset_server.load("textures/deciduous_leaves/color.png");
+    let leaf_texture_normal: Handle<Image> = asset_server.load("textures/deciduous_leaves/normal_gl.png");
+    let leaf_material = Some(MeshMaterial3d(materials.add(
+        StandardMaterial {
+            base_color_texture: Some(leaf_texture_color),
+            normal_map_texture: Some(leaf_texture_normal),
+            cull_mode: None, // show leaves from both sides (makes the tree "fuller")
+            alpha_mode: AlphaMode::Mask(0.5),
+            ..Default::default()
+        }
+    )));
     commands.spawn((
         Tree {
+            seed: 0,
+            tree_mesh_settings: None, // set to None to fallback to the global resource
             bark_material,
             leaf_material,
         },
