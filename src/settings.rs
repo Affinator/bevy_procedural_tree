@@ -160,7 +160,7 @@ impl Default for BranchParams {
         Self {
             levels: BranchRecursionLevel::Three,
             angle: [0.0, 39.0, 39.0, 59.0],
-            children: [10, 4, 3],
+            children: [7, 4, 10],
             force: BranchForce::default(),
             gnarliness: [-0.05, 0.20, 0.16, 0.05],
             length: [4.5, 2.9, 1.5, 0.45],
