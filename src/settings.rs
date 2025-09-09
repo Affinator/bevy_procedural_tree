@@ -13,10 +13,9 @@ use crate::enums::{LeafBillboard, TreeType};
 #[cfg(feature="inspector")]
 #[derive(Resource, Component, Reflect, InspectorOptions, Debug, Clone, PartialEq)]
 #[reflect(Resource, Component, InspectorOptions)]
-pub struct TreeSettings {
+pub struct TreeMeshSettings {
     pub seed: u64,
     pub tree_type: TreeType,
-    pub bark: BarkParams,
     pub branch: BranchParams,
     pub leaves: LeafParams,
 }
@@ -28,44 +27,18 @@ pub struct TreeSettings {
 pub struct TreeSettings {
     pub seed: u64,
     pub tree_type: TreeType,
-    pub bark: BarkParams,
     pub branch: BranchParams,
     pub leaves: LeafParams,
 }
 
 
-impl Default for TreeSettings {
+impl Default for TreeMeshSettings {
     fn default() -> Self {
         Self {            
             seed: 0,
             tree_type: TreeType::Deciduous,
-            bark: BarkParams::default(),
             branch: BranchParams::default(),
             leaves: LeafParams::default(),
-        }
-    }
-}
-
-
-
-
-
-
-#[derive(Reflect, Debug, Clone, PartialEq)]
-pub struct BarkParams {
-    pub tint: Color,
-    pub flat_shading: bool,
-    pub textured: bool,
-    pub texture_scale: Vec2,
-}
-
-impl Default for BarkParams {
-    fn default() -> Self {
-        Self {
-            tint: Color::WHITE,
-            flat_shading: false,
-            textured: true,
-            texture_scale: Vec2 { x: 1.0, y: 1.0 },
         }
     }
 }
@@ -217,16 +190,12 @@ pub struct LeafParams {
     pub angle: f32,
     /// amount of leaves
     pub count: u32,
-    /// when leaves start relative to the length of the branch (0..1)
+    /// when leaves start relative to the length of the branch (0..1); will be clamped between 0.0 and 1.0
     pub start: f32,
     /// average size of leaves
     pub size: f32,
     /// variance of leaf sizes (negative values are ignored)
-    pub size_variance: f32,
-    /// tint color for leaves
-    pub tint: Color,
-    /// alpha-test-threshold (0..1)
-    pub alpha_test: f32,
+    pub size_variance: f32
 }
 
 impl Default for LeafParams {
@@ -235,11 +204,9 @@ impl Default for LeafParams {
             leaf_billboard: LeafBillboard::Double,
             angle: 10.0,
             count: 1,
-            start: 0.0,
+            start: 0.25,
             size: 0.25,
             size_variance: 0.4,
-            tint: Color::WHITE,
-            alpha_test: 0.5,
         }
     }
 }

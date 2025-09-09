@@ -4,7 +4,7 @@ use std::f32::consts::PI;
 use bevy::{asset::RenderAssetUsages, prelude::*, render::mesh::{Indices, PrimitiveTopology}};
 use fastrand::Rng;
 
-use crate::{enums::TreeType, settings::TreeSettings};
+use crate::{enums::TreeType, settings::TreeMeshSettings};
 
 #[derive(Debug, Clone)]
 struct BranchGenState {
@@ -36,7 +36,7 @@ struct MeshAttributes {
     indices: Vec<u16>
 }
 
-pub(crate) fn generate_tree(settings: &TreeSettings, rng: &mut Rng) -> (Mesh, Mesh) { 
+pub(crate) fn generate_tree(settings: &TreeMeshSettings, rng: &mut Rng) -> (Mesh, Mesh) { 
     let state: BranchGenState = BranchGenState {
         origin: Vec3::ZERO,
         orientation: Quat::IDENTITY,
@@ -53,7 +53,7 @@ pub(crate) fn generate_tree(settings: &TreeSettings, rng: &mut Rng) -> (Mesh, Me
     generate_branches_internal(settings, state, rng)
 }
 
-fn generate_branches_internal(settings: &TreeSettings, state: BranchGenState, rng: &mut Rng) -> (Mesh, Mesh) { 
+fn generate_branches_internal(settings: &TreeMeshSettings, state: BranchGenState, rng: &mut Rng) -> (Mesh, Mesh) { 
     // Allocate mesh attributes
     // TODO allocate just enough to reduce reallocations
     let mut branches_attributes: MeshAttributes = MeshAttributes::default();
@@ -81,7 +81,7 @@ fn generate_branches_internal(settings: &TreeSettings, state: BranchGenState, rn
 
 #[allow(clippy::too_many_arguments)]
 fn recurse_a_branch(
-    settings: &TreeSettings,
+    settings: &TreeMeshSettings,
     state: BranchGenState,
     rng: &mut Rng,
     branches_attributes: &mut MeshAttributes,
@@ -290,7 +290,7 @@ fn generate_child_branches (
     count: u8,
     level: usize,
     parent_sections: &[SectionData],
-    settings: &TreeSettings,
+    settings: &TreeMeshSettings,
     rng: &mut Rng,
 ) -> Vec<BranchGenState> {
     if count == 0 || parent_sections.is_empty(){
@@ -362,7 +362,7 @@ fn generate_child_branches (
 fn generate_leaves(
     sections: &[SectionData],
     level: usize,
-    settings: &TreeSettings,
+    settings: &TreeMeshSettings,
     rng: &mut Rng,
     leaves_attributes: &mut MeshAttributes
 )
@@ -372,7 +372,7 @@ fn generate_leaves(
 
     for i in 0..settings.leaves.count {
         // how far along the section should this leaf start
-        let leaf_start = f32::lerp(settings.leaves.start, 1.0, rng.f32());
+        let leaf_start = f32::lerp(settings.leaves.start.clamp(0.0, 1.0), 1.0, rng.f32());
 
         // find relevant sections depending on leaf_start
         let leaf_pos = leaf_start * section_count_minus_one as f32;
@@ -403,7 +403,7 @@ fn generate_leaves(
 }
 
 fn generate_leaf(
-    settings: &TreeSettings,
+    settings: &TreeMeshSettings,
     origin: Vec3,
     orientation: Quat,
     rng: &mut Rng,

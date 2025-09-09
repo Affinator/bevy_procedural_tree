@@ -4,7 +4,7 @@ use bevy::core_pipeline::tonemapping::Tonemapping;
 use bevy::render::diagnostic::RenderDiagnosticsPlugin;
 use bevy_inspector_egui::bevy_egui::EguiPlugin;
 use bevy_inspector_egui::quick::{ResourceInspectorPlugin, WorldInspectorPlugin};
-use bevy_procedural_tree::settings::TreeSettings;
+use bevy_procedural_tree::settings::TreeMeshSettings;
 use bevy_procedural_tree::{Tree, TreeProceduralGenerationPlugin};
 use iyes_perf_ui::prelude::*;
 
@@ -19,7 +19,7 @@ fn main() {
     .add_plugins(PerfUiPlugin)
     .add_plugins(EguiPlugin::default())
     .add_plugins(WorldInspectorPlugin::new())
-    .add_plugins(ResourceInspectorPlugin::<TreeSettings>::default())
+    .add_plugins(ResourceInspectorPlugin::<TreeMeshSettings>::default())
     .add_systems(Startup, setup)
     .run();
 }
@@ -63,9 +63,15 @@ fn setup(
         MeshMaterial3d(materials.add(Color::WHITE)),
         Transform::from_xyz(3.0, height/2.0, 0.0)
     ));
+
     // tree
+    let bark_material = Some(MeshMaterial3d(materials.add(Color::LinearRgba(LinearRgba { red: 0.5, green: 1.0, blue: 0.5, alpha: 1.0 }))));
+    let leaf_material = Some(MeshMaterial3d(materials.add(Color::LinearRgba(LinearRgba { red: 0.2, green: 0.8, blue: 0.2, alpha: 0.9 }))));
     commands.spawn((
-        Tree,
+        Tree {
+            bark_material,
+            leaf_material,
+        },
         Transform::from_xyz(0.0, 0.0, 0.0)
     ));
 }
