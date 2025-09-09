@@ -8,5 +8,6 @@
     - TODO how to generalize bark and leaf materials (to not force StandardMaterial)
 
 # Misc:
+- probably update to u32 indices for more complex trees
 - resolution (LOD) of meshes should be flexible
     - regen the meshes if the desired resolution changes
