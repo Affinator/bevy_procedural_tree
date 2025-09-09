@@ -14,7 +14,6 @@ use crate::enums::{LeafBillboard, TreeType};
 #[derive(Resource, Component, Reflect, InspectorOptions, Debug, Clone, PartialEq)]
 #[reflect(Resource, Component, InspectorOptions)]
 pub struct TreeMeshSettings {
-    pub seed: u64,
     pub tree_type: TreeType,
     pub branch: BranchParams,
     pub leaves: LeafParams,
@@ -25,7 +24,6 @@ pub struct TreeMeshSettings {
 #[derive(Resource, Component, Reflect, Debug, Clone, PartialEq)]
 #[reflect(Resource, Component)]
 pub struct TreeSettings {
-    pub seed: u64,
     pub tree_type: TreeType,
     pub branch: BranchParams,
     pub leaves: LeafParams,
@@ -34,8 +32,7 @@ pub struct TreeSettings {
 
 impl Default for TreeMeshSettings {
     fn default() -> Self {
-        Self {            
-            seed: 0,
+        Self {       
             tree_type: TreeType::Deciduous,
             branch: BranchParams::default(),
             leaves: LeafParams::default(),
@@ -122,8 +119,8 @@ pub struct BranchParams {
     /// The first value is ignored (the trunk is always perpendicular to the ground)
     pub angle: [f32; 4],
 
-    /// amount of children per level 0..3 (0 = trunk)
-    pub children: [u8; 4],
+    /// amount of children per level 0..3 (0 = children of trunk)
+    pub children: [u8; 3],
 
     /// Control the general direction of branches
     pub force: BranchForce,
@@ -163,7 +160,7 @@ impl Default for BranchParams {
         Self {
             levels: BranchRecursionLevel::Three,
             angle: [0.0, 39.0, 39.0, 59.0],
-            children: [10, 4, 3, 1],
+            children: [10, 4, 3],
             force: BranchForce::default(),
             gnarliness: [-0.05, 0.20, 0.16, 0.05],
             length: [4.5, 2.9, 1.5, 0.45],
@@ -202,8 +199,8 @@ impl Default for LeafParams {
     fn default() -> Self {
         Self {
             leaf_billboard: LeafBillboard::Double,
-            angle: 10.0,
-            count: 1,
+            angle: 60.0,
+            count: 3,
             start: 0.25,
             size: 0.25,
             size_variance: 0.4,

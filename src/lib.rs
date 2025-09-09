@@ -27,6 +27,10 @@ impl Plugin for TreeProceduralGenerationPlugin {
 #[derive(Component, Reflect, Clone, Debug)]
 #[component(on_add = new_tree_component_added)]
 pub struct Tree {
+    /// the seed for the rng (same seed and TreeMeshSettings = same tree mesh)
+    pub seed: u64,
+    /// the settings to use for this tree; if set to none the settings from the global TreeMeshSettings resource are used
+    pub tree_mesh_settings: Option<TreeMeshSettings>,
     /// defaults to Color::WHITE
     pub bark_material: Option<MeshMaterial3d<StandardMaterial>>,
     /// defaults to green -> Color::LinearRgba(LinearRgba { red: 0.0, green: 1.0, blue: 0.0, alpha: 1.0 }
@@ -44,12 +48,15 @@ fn new_tree_component_added(mut world: DeferredWorld, context: HookContext) {
 
     // Generate meshes
     // TODO: remove unwrap
-    let tree_settings = world.get_resource::<TreeMeshSettings>().unwrap();
-    let tree_settings: TreeMeshSettings = tree_settings.clone();
-    let texture_settings: Tree = (*world.entity(tree_entity).components::<&Tree>()).clone();
+    let tree: Tree = (*world.entity(tree_entity).components::<&Tree>()).clone();
+    let tree_mesh_settings = tree.tree_mesh_settings.or_else(
+      || {
+            world.get_resource::<TreeMeshSettings>().cloned()
+      }  
+    ).unwrap();
 
-    let mut rng: Rng = Rng::with_seed(tree_settings.seed);
-    let (branches_mesh, leaves_mesh) = generate_tree(&tree_settings, &mut rng);
+    let mut rng: Rng = Rng::with_seed(tree.seed);
+    let (branches_mesh, leaves_mesh) = generate_tree(&tree_mesh_settings, &mut rng);
     
     // retrieve AssetServer
     let mut meshes = world.get_resource_mut::<Assets<Mesh>>().unwrap();
@@ -60,7 +67,7 @@ fn new_tree_component_added(mut world: DeferredWorld, context: HookContext) {
 
     let mut materials = world.get_resource_mut::<Assets<StandardMaterial>>().unwrap();
     // bark material
-    let branch_material = texture_settings.bark_material.clone().or_else(
+    let branch_material = tree.bark_material.clone().or_else(
         || {
             let mut material = StandardMaterial::from(Color::WHITE);
             material.cull_mode = None;
@@ -68,7 +75,7 @@ fn new_tree_component_added(mut world: DeferredWorld, context: HookContext) {
         }
     ).unwrap();
     // leaf material
-    let leaf_material = texture_settings.leaf_material.clone().or_else(
+    let leaf_material = tree.leaf_material.clone().or_else(
         || {
             let mut material = StandardMaterial::from(Color::LinearRgba(LinearRgba { red: 0.0, green: 1.0, blue: 0.0, alpha: 1.0 }));
             material.cull_mode = None;
@@ -91,24 +98,23 @@ fn new_tree_component_added(mut world: DeferredWorld, context: HookContext) {
         Name::new("ProcGenTreeBranches"),
         Leaves(leaves_id),
         branches_mesh,
-        branch_material,
-        tree_settings
+        branch_material
     )).add_child(leaves_id);
 
 }
 
 fn update_tree(
-    trees: Query<(Entity, &Leaves), With<Tree>>,
+    trees: Query<(Entity, &Tree, &Leaves)>,
     tree_settings: Res<TreeMeshSettings>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut commands: Commands,
 ) {
     info!("Updating trees, due to changed TreeSettings...");
     // For now we are regenerating the tree each time 
-    // TODO: Try to modify in place (or at least only branch/leaf levels that need modification)
-    let mut rng: Rng = Rng::with_seed(tree_settings.seed);
+    // TODO: Try to modify in place (or at least only branch/leaf levels or textures that need modification)
 
-    for (tree_entity, leaves_entity) in trees.iter() {
+    for (tree_entity, tree, leaves_entity) in trees.iter() {
+        let mut rng: Rng = Rng::with_seed(tree.seed);
         let (branches_mesh, leaves_mesh) = generate_tree(&tree_settings, &mut rng);
         let branches_mesh = Mesh3d(meshes.add(branches_mesh));
         let leaves_mesh = Mesh3d(meshes.add(leaves_mesh));

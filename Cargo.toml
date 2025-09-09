@@ -35,6 +35,7 @@ bevy = { version = "0.16.1", default-features = false, features =  [
     "bevy_window",
     "bevy_winit",
     "hdr",
+    "png",
     "multi_threaded",
     "std",
     "sysinfo_plugin",
