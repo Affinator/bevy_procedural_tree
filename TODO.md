@@ -9,5 +9,6 @@
 
 # Misc:
 - probably update to u32 indices for more complex trees
+- Allow separate "normal" modes: one from the generation, one just pointing away outside (fluffy), etc
 - resolution (LOD) of meshes should be flexible
     - regen the meshes if the desired resolution changes
