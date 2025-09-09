@@ -269,7 +269,7 @@ fn recurse_a_branch(
     if state.recursion_count == settings.branch.levels as usize {
         // generate leaves at the different sections of this branch
         // state.level is constant in this case, we keep it as a parameter for possible future functionality
-        generate_leaves(&sections, state.recursion_count, settings, rng, leaves_attributes);
+        generate_leaves(&sections, settings, rng, leaves_attributes);
     }
     else {
         for child_branch_state in generate_child_branches(
@@ -361,7 +361,6 @@ fn generate_child_branches (
 
 fn generate_leaves(
     sections: &[SectionData],
-    level: usize,
     settings: &TreeMeshSettings,
     rng: &mut Rng,
     leaves_attributes: &mut MeshAttributes
@@ -393,7 +392,7 @@ fn generate_leaves(
 
         // calculate needed angles 
         let radial_angle = 2.0 * std::f32::consts::PI * (radial_offset + (i as f32) / (settings.leaves.count as f32));
-        let angle_rad = settings.branch.angle[level].to_radians();
+        let angle_rad = settings.leaves.angle.to_radians();
         let q1 = Quat::from_axis_angle(Vec3::X, angle_rad);
         let q2 = Quat::from_axis_angle(Vec3::Y, radial_angle);
         let child_quat = parent_orientation * q2 * q1;
