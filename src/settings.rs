@@ -23,7 +23,7 @@ pub struct TreeMeshSettings {
 #[cfg(not(feature="inspector"))]
 #[derive(Resource, Component, Reflect, Debug, Clone, PartialEq)]
 #[reflect(Resource, Component)]
-pub struct TreeSettings {
+pub struct TreeMeshSettings {
     pub tree_type: TreeType,
     pub branch: BranchParams,
     pub leaves: LeafParams,
