@@ -1,4 +1,5 @@
 use bevy::diagnostic::{EntityCountDiagnosticsPlugin, FrameTimeDiagnosticsPlugin, SystemInformationDiagnosticsPlugin};
+use bevy::input::mouse::{AccumulatedMouseMotion, MouseWheel};
 use bevy::prelude::*;
 use bevy::core_pipeline::tonemapping::Tonemapping;
 use bevy::render::diagnostic::RenderDiagnosticsPlugin;
@@ -21,10 +22,11 @@ fn main() {
     .add_plugins(WorldInspectorPlugin::new())
     .add_plugins(ResourceInspectorPlugin::<TreeMeshSettings>::default())
     .add_systems(Startup, setup)
+    .add_systems(Update, orbit)
     .run();
 }
 
-
+const TARGET_CAMERA_FOCUS: Vec3 = Vec3 { x: 0.0, y: 2.5, z: 0.0 };
 
 /// set up a simple 3D scene
 fn setup(
@@ -53,7 +55,7 @@ fn setup(
     // camera
     commands.spawn((
         Camera3d::default(),
-        Transform::from_xyz(-2.5, 2.0, 9.0).looking_at(Vec3::new(0.0, 2.0, 0.0), Vec3::Y),
+        Transform::from_xyz(-2.5, 2.0, 9.0).looking_at(TARGET_CAMERA_FOCUS, Vec3::Y),
         Tonemapping::None,
     ));
 
@@ -112,4 +114,49 @@ fn setup(
         },
         Transform::from_xyz(4.0, 0.0, -3.0)
     ));
+}
+
+
+fn orbit(
+    mut camera: Single<&mut Transform, With<Camera>>,
+    mouse_buttons: Res<ButtonInput<MouseButton>>,
+    mut mouse_wheel_events: EventReader<MouseWheel>,
+    mouse_motion: Res<AccumulatedMouseMotion>,
+    // time: Res<Time>,
+) {
+    let delta = mouse_motion.delta;
+    
+    // Limiting pitch stops some unexpected rotation past 90° up or down.
+    const PITCH_LIMIT:f32 = core::f32::consts::FRAC_PI_2 - 0.0001;
+    let mut orbit_distance: f32 = (camera.translation - TARGET_CAMERA_FOCUS).length();
+
+    // rotation
+    if mouse_buttons.pressed(MouseButton::Left) {
+        // Mouse motion is one of the few inputs that should not be multiplied by delta time,
+        // as we are already receiving the full movement since the last frame was rendered. Multiplying
+        // by delta time here would make the movement slower that it should be.
+        let delta_pitch = delta.y * 0.002;
+        let delta_yaw = delta.x * 0.002;
+
+        // Obtain the existing pitch, yaw, and roll values from the transform.
+        let (yaw, pitch, _) = camera.rotation.to_euler(EulerRot::YXZ);
+
+        // Establish the new yaw and pitch, preventing the pitch value from exceeding our limits.
+        let pitch = (pitch + delta_pitch).clamp(-PITCH_LIMIT, PITCH_LIMIT);
+        let yaw = yaw + delta_yaw;
+        camera.rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, 0.0);
+
+        // Adjust the translation to maintain the correct orientation toward the orbit target.
+        // In our example it's a static target, but this could easily be customized.
+        camera.translation = TARGET_CAMERA_FOCUS - camera.forward() * orbit_distance;
+    }
+
+    // mouse wheel zoom
+    for mouse_wheel_event in mouse_wheel_events.read() {
+        orbit_distance = (orbit_distance + mouse_wheel_event.y).clamp(0.1, 25.0);
+        
+        // Adjust the translation to maintain the correct orientation toward the orbit target.
+        // In our example it's a static target, but this could easily be customized.
+        camera.translation = TARGET_CAMERA_FOCUS - camera.forward() * orbit_distance;
+    }
 }
