@@ -61,6 +61,7 @@ fn setup(
     let bark_texture_color: Handle<Image> = asset_server.load("textures/bark_willow/color.png");
     let bark_texture_normal: Handle<Image> = asset_server.load("textures/bark_willow/normal_gl.png");
     let bark_texture_roughness: Handle<Image> = asset_server.load("textures/bark_willow/roughness.png");
+    // let bark_texture_displacement: Handle<Image> = asset_server.load("textures/bark_willow/displacement.png");
     let bark_material = Some(MeshMaterial3d(materials.add(
         StandardMaterial {
             base_color_texture: Some(bark_texture_color),
@@ -68,6 +69,7 @@ fn setup(
             metallic_roughness_texture: Some(bark_texture_roughness),
             perceptual_roughness: 1.0,
             reflectance: 0.1,
+            // depth_map: Some(bark_texture_displacement),
             ..Default::default()
         }
     )));
