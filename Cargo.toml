@@ -1,8 +1,12 @@
 [package]
 name = "bevy_procedural_tree"
+description = "Procedurally generated 3D trees for bevy"
 authors = ["Affinator"]
 version = "0.1.0"
 edition = "2024"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/Affinator/bevy_procedural_tree"
+exclude = ["assets/", "examples/"]
 
 [features]
 default = []
@@ -12,8 +16,6 @@ perf_ui = ["iyes_perf_ui"]
 [dependencies]
 bevy = { version = "0.16.1", default-features = false, features =  [
     "bevy_color",
-    "bevy_gizmos",
-    "bevy_log",
     "bevy_pbr",
     "bevy_render",
     "multi_threaded",
