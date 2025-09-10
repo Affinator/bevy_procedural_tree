@@ -60,22 +60,30 @@ fn setup(
     // tree
     let bark_texture_color: Handle<Image> = asset_server.load("textures/bark_willow/color.png");
     let bark_texture_normal: Handle<Image> = asset_server.load("textures/bark_willow/normal_gl.png");
+    let bark_texture_roughness: Handle<Image> = asset_server.load("textures/bark_willow/roughness.png");
     let bark_material = Some(MeshMaterial3d(materials.add(
         StandardMaterial {
             base_color_texture: Some(bark_texture_color),
             normal_map_texture: Some(bark_texture_normal),
-            cull_mode: None, // show bark from both sides
+            metallic_roughness_texture: Some(bark_texture_roughness),
+            perceptual_roughness: 1.0,
+            reflectance: 0.1,
             ..Default::default()
         }
     )));
 
     let leaf_texture_color: Handle<Image> = asset_server.load("textures/deciduous_leaves/color.png");
     let leaf_texture_normal: Handle<Image> = asset_server.load("textures/deciduous_leaves/normal_gl.png");
+    let leaf_texture_roughness: Handle<Image> = asset_server.load("textures/deciduous_leaves/roughness.png");
     let leaf_material = Some(MeshMaterial3d(materials.add(
         StandardMaterial {
             base_color_texture: Some(leaf_texture_color),
             normal_map_texture: Some(leaf_texture_normal),
+            metallic_roughness_texture: Some(leaf_texture_roughness),
+            perceptual_roughness: 1.0,
+            reflectance: 0.1,
             cull_mode: None, // show leaves from both sides (makes the tree "fuller")
+            double_sided: true,
             alpha_mode: AlphaMode::Mask(0.5),
             ..Default::default()
         }
