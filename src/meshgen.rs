@@ -5,6 +5,7 @@ use bevy::{asset::RenderAssetUsages, prelude::*, render::mesh::{Indices, Primiti
 use fastrand::Rng;
 
 use crate::{enums::TreeType, settings::TreeMeshSettings};
+use crate::errors::IndicesOverflowError;
 
 #[derive(Debug, Clone)]
 struct BranchGenState {
@@ -28,6 +29,7 @@ struct SectionData {
     pub radius: f32
 }
 
+#[cfg(not(feature = "u32_indices"))]
 #[derive(Debug, Default)]
 struct MeshAttributes {
     positions: Vec<[f32; 3]>,
@@ -36,7 +38,16 @@ struct MeshAttributes {
     indices: Vec<u16>
 }
 
-pub(crate) fn generate_tree(settings: &TreeMeshSettings, rng: &mut Rng) -> (Mesh, Mesh) { 
+#[cfg(feature = "u32_indices")]
+#[derive(Debug, Default)]
+struct MeshAttributes {
+    positions: Vec<[f32; 3]>,
+    normals: Vec<[f32; 3]>,
+    uvs: Vec<[f32; 2]>,
+    indices: Vec<u32>
+}
+
+pub(crate) fn generate_tree(settings: &TreeMeshSettings, rng: &mut Rng) -> Result<(Mesh, Mesh), BevyError> { 
     let state: BranchGenState = BranchGenState {
         origin: Vec3::ZERO,
         orientation: Quat::IDENTITY,
@@ -53,30 +64,36 @@ pub(crate) fn generate_tree(settings: &TreeMeshSettings, rng: &mut Rng) -> (Mesh
     generate_branches_internal(settings, state, rng)
 }
 
-fn generate_branches_internal(settings: &TreeMeshSettings, state: BranchGenState, rng: &mut Rng) -> (Mesh, Mesh) { 
+fn generate_branches_internal(settings: &TreeMeshSettings, state: BranchGenState, rng: &mut Rng) -> Result<(Mesh, Mesh), BevyError> { 
     // Allocate mesh attributes
     // TODO allocate just enough to reduce reallocations
     let mut branches_attributes: MeshAttributes = MeshAttributes::default();
     let mut leaves_attributes: MeshAttributes = MeshAttributes::default();
     //let mut branches_colors:    Vec<[f32; 4]> = Vec::new(); //with_capacity(rings * ring_stride);
 
-    recurse_a_branch(settings, state, rng, &mut branches_attributes, &mut leaves_attributes);
+    recurse_a_branch(settings, state, rng, &mut branches_attributes, &mut leaves_attributes)?;
     
     // build meshes
     let mut branches_mesh = Mesh::new(PrimitiveTopology::TriangleList, RenderAssetUsages::MAIN_WORLD | RenderAssetUsages::RENDER_WORLD);
     branches_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, branches_attributes.positions);
     branches_mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, branches_attributes.normals);
     branches_mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, branches_attributes.uvs);
+    #[cfg(not(feature = "u32_indices"))]
     branches_mesh.insert_indices(Indices::U16(branches_attributes.indices));
+    #[cfg(feature = "u32_indices")]
+    branches_mesh.insert_indices(Indices::U32(branches_attributes.indices));
     //branches_mesh.insert_attribute(Mesh::ATTRIBUTE_COLOR, branches_colors);
 
     let mut leaves_mesh = Mesh::new(PrimitiveTopology::TriangleList, RenderAssetUsages::MAIN_WORLD | RenderAssetUsages::RENDER_WORLD);
     leaves_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, leaves_attributes.positions);
     leaves_mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, leaves_attributes.normals);
     leaves_mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, leaves_attributes.uvs);
+    #[cfg(not(feature = "u32_indices"))]
     leaves_mesh.insert_indices(Indices::U16(leaves_attributes.indices));
+    #[cfg(feature = "u32_indices")]
+    leaves_mesh.insert_indices(Indices::U32(leaves_attributes.indices));
 
-    (branches_mesh, leaves_mesh)
+    Ok((branches_mesh, leaves_mesh))
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -87,9 +104,23 @@ fn recurse_a_branch(
     branches_attributes: &mut MeshAttributes,
     //branches_colors: &mut Vec<[f32; 4]>,
     leaves_attributes: &mut MeshAttributes
-) 
+) -> Result<(), BevyError>
 {       
+    #[cfg(not(feature = "u32_indices"))]
     let indices_start: u16 = branches_attributes.positions.len() as u16;
+    #[cfg(feature = "u32_indices")]
+    let indices_start: u32 = branches_attributes.positions.len() as u32;
+    // catch going outside of the allowed range early and tell the user
+    let approx_amount_of_indices_of_this_branch: usize = state.sections * state.segments * 6;
+    #[cfg(not(feature = "u32_indices"))]
+    if branches_attributes.indices.len() >= (u16::MAX as usize - approx_amount_of_indices_of_this_branch) {
+        return Err(IndicesOverflowError.into());
+    }
+    #[cfg(feature = "u32_indices")]
+    if branches_attributes.indices.len() >= (u32::MAX as usize - approx_amount_of_indices_of_this_branch) {
+        return Err(IndicesOverflowError.into());
+    }
+
     // local section storage    
     let mut sections: Vec<SectionData> = Vec::with_capacity(state.sections);
     
@@ -228,17 +259,35 @@ fn recurse_a_branch(
     } // END for each section
     
     // Indices (triangles) are build around the ring per segment
-    let ring_stride: u16 = state.segments as u16 + 1;    
-    for i in 0..state.sections as u16 {
-        for j in 0..state.segments as u16 {
-            let a: u16 = i * ring_stride        + j         + indices_start;
-            let b: u16 = i * ring_stride        + (j + 1)   + indices_start;
-            let c: u16 = a + ring_stride;
-            let d: u16 = b + ring_stride;
-    
-            branches_attributes.indices.extend_from_slice(&[a, c, b, b, c, d]);
+    #[cfg(not(feature = "u32_indices"))]
+    {
+        let ring_stride: u16 = state.segments as u16 + 1;    
+        for i in 0..state.sections as u16 {
+            for j in 0..state.segments as u16 {
+                let a: u16 = i * ring_stride        + j         + indices_start;
+                let b: u16 = i * ring_stride        + (j + 1)   + indices_start;
+                let c: u16 = a + ring_stride;
+                let d: u16 = b + ring_stride;
+        
+                branches_attributes.indices.extend_from_slice(&[a, c, b, b, c, d]);
+            }
         }
-    }    
+    }  
+    #[cfg(feature = "u32_indices")]
+    {
+        let ring_stride: u32 = state.segments as u32 + 1;    
+        for i in 0..state.sections as u32 {
+            for j in 0..state.segments as u32 {
+                let a: u32 = i * ring_stride        + j         + indices_start;
+                let b: u32 = i * ring_stride        + (j + 1)   + indices_start;
+                let c: u32 = a + ring_stride;
+                let d: u32 = b + ring_stride;
+        
+                branches_attributes.indices.extend_from_slice(&[a, c, b, b, c, d]);
+            }
+        }
+    }  
+
 
     if matches!(settings.tree_type, TreeType::Deciduous) && state.level == 0 {
         if state.recursion_count < settings.branch.levels as usize {
@@ -258,18 +307,18 @@ fn recurse_a_branch(
                 sections: state.sections,
                 segments: state.segments,
             };
-            recurse_a_branch(settings, additional_trunk_part, rng, branches_attributes, leaves_attributes);
+            recurse_a_branch(settings, additional_trunk_part, rng, branches_attributes, leaves_attributes)?;
         }
         else {
             // generate a nice single leaf at the top
-            generate_leaf(settings, section_origin, section_orientation, rng, leaves_attributes);
+            generate_leaf(settings, section_origin, section_orientation, rng, leaves_attributes)?;
         }
     }
 
     if state.recursion_count == settings.branch.levels as usize {
         // generate leaves at the different sections of this branch
         // state.level is constant in this case, we keep it as a parameter for possible future functionality
-        generate_leaves(&sections, settings, rng, leaves_attributes);
+        generate_leaves(&sections, settings, rng, leaves_attributes)?;
     }
     else {
         for child_branch_state in generate_child_branches(
@@ -279,9 +328,11 @@ fn recurse_a_branch(
             settings,
             rng
         ) {
-            recurse_a_branch(settings, child_branch_state, rng, branches_attributes, leaves_attributes);
+            recurse_a_branch(settings, child_branch_state, rng, branches_attributes, leaves_attributes)?;
         }
     }
+
+    Ok(())
 }
 
 
@@ -364,8 +415,19 @@ fn generate_leaves(
     settings: &TreeMeshSettings,
     rng: &mut Rng,
     leaves_attributes: &mut MeshAttributes
-)
+) -> Result<(), BevyError>
 {
+    // catch going outside of the allowed range early and tell the user
+    let approx_amount_of_indices_of_this_leaf: usize = settings.leaves.count as usize * 6;
+    #[cfg(not(feature = "u32_indices"))]
+    if leaves_attributes.indices.len() >= (u16::MAX as usize - approx_amount_of_indices_of_this_leaf) {
+        return Err(IndicesOverflowError.into());
+    }
+    #[cfg(feature = "u32_indices")]
+    if leaves_attributes.indices.len() >= (u32::MAX as usize - approx_amount_of_indices_of_this_leaf) {
+        return Err(IndicesOverflowError.into());
+    }
+
     let radial_offset: f32 = rng.f32();
     let section_count_minus_one: usize = sections.len().saturating_sub(1);  
 
@@ -397,8 +459,10 @@ fn generate_leaves(
         let q2 = Quat::from_axis_angle(Vec3::Y, radial_angle);
         let child_quat = parent_orientation * q2 * q1;
 
-        generate_leaf(settings, leaf_origin, child_quat, rng, leaves_attributes);
+        generate_leaf(settings, leaf_origin, child_quat, rng, leaves_attributes)?;
     }
+
+    Ok(())
 }
 
 fn generate_leaf(
@@ -407,8 +471,12 @@ fn generate_leaf(
     orientation: Quat,
     rng: &mut Rng,
     leaves_attributes: &mut MeshAttributes
-) {
-    let mut indices_start = leaves_attributes.positions.len() as u16;
+) -> Result<(), BevyError>
+{
+    #[cfg(not(feature = "u32_indices"))]
+    let mut indices_start: u16 = leaves_attributes.positions.len() as u16;
+    #[cfg(feature = "u32_indices")]
+    let mut indices_start: u32 = leaves_attributes.positions.len() as u32;
 
     let leaf_size_variance = (2.0 * rng.f32() - 1.0) * settings.leaves.size_variance.max(0.0);
     let leaf_size = settings.leaves.size * (1.0 + leaf_size_variance);
@@ -446,5 +514,5 @@ fn generate_leaf(
         indices_start += 4;
     }
 
-
+    Ok(())
 }

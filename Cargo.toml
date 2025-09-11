@@ -10,6 +10,7 @@ exclude = ["assets/", "examples/"]
 
 [features]
 default = []
+u32_indices = []
 inspector = ["bevy-inspector-egui"]
 perf_ui = ["iyes_perf_ui"]
 
