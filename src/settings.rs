@@ -199,7 +199,7 @@ impl Default for LeafParams {
     fn default() -> Self {
         Self {
             leaf_billboard: LeafBillboard::Double,
-            angle: 60.0,
+            angle: 35.0,
             count: 3,
             start: 0.25,
             size: 0.25,

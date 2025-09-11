@@ -93,22 +93,22 @@ fn setup(
         }
     )));
 
-    // tree with local settings
+    // tree using global settings (Res<TreeMeshSettings>)
     commands.spawn((
         Tree {
             seed: 0,
-            tree_mesh_settings: Some(TreeMeshSettings::default()), // set to None to fallback to the global resource
+            tree_mesh_settings: None, // set to None to fallback to the global resource
             bark_material: bark_material.clone(),
             leaf_material: leaf_material.clone(),
         },
         Transform::from_xyz(0.0, 0.0, 0.0)
     ));
 
-    // tree using global settings (Res<TreeMeshSettings>)
+    // tree with local settings
     commands.spawn((
         Tree {
             seed: 0,
-            tree_mesh_settings: None, // set to None to fallback to the global resource
+            tree_mesh_settings: Some(TreeMeshSettings::default()), // set to None to fallback to the global resource
             bark_material,
             leaf_material,
         },

@@ -441,7 +441,7 @@ fn generate_leaf(
         leaves_attributes.normals.push(normal);
 
         // uvs and indices
-        leaves_attributes.uvs.extend_from_slice(&[[0.0, 1.0],[0.0, 0.0],[1.0, 0.0],[1.0, 1.0]]);
+        leaves_attributes.uvs.extend_from_slice(&[[0.0, 0.0],[0.0, 1.0],[1.0, 1.0],[1.0, 0.0]]);
         leaves_attributes.indices.extend_from_slice(&[indices_start, indices_start+1, indices_start+2, indices_start, indices_start+2, indices_start+3]);
         indices_start += 4;
     }
