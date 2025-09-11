@@ -192,6 +192,8 @@ pub struct LeafParams {
     /// average size of leaves
     pub size: f32,
     /// variance of leaf sizes (negative values are ignored)
+    /// 
+    /// internal formula for a single leaf is: (rng(-1.0..1.0) * size_variance + 1.0) * size
     pub size_variance: f32
 }
 
@@ -203,7 +205,7 @@ impl Default for LeafParams {
             count: 3,
             start: 0.25,
             size: 0.25,
-            size_variance: 0.4,
+            size_variance: 0.2,
         }
     }
 }
