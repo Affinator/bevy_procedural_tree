@@ -11,7 +11,12 @@ use iyes_perf_ui::prelude::*;
 
 fn main() {
     App::new()
-    .add_plugins(DefaultPlugins)
+    .add_plugins(DefaultPlugins
+        .set(AssetPlugin {
+            mode: AssetMode::Unprocessed,
+            ..default()
+        })
+    )
     .add_plugins(FrameTimeDiagnosticsPlugin::default())
     .add_plugins(EntityCountDiagnosticsPlugin)
     .add_plugins(SystemInformationDiagnosticsPlugin)
@@ -60,10 +65,10 @@ fn setup(
     ));
 
     // tree
-    let bark_texture_color: Handle<Image> = asset_server.load("textures/bark_willow/color.png");
-    let bark_texture_normal: Handle<Image> = asset_server.load("textures/bark_willow/normal_gl.png");
-    let bark_texture_roughness: Handle<Image> = asset_server.load("textures/bark_willow/roughness.png");
-    // let bark_texture_displacement: Handle<Image> = asset_server.load("textures/bark_willow/displacement.png");
+    let bark_texture_color: Handle<Image> = asset_server.load("textures/bark_willow/color.dds");
+    let bark_texture_normal: Handle<Image> = asset_server.load("textures/bark_willow/normal_gl.dds");
+    let bark_texture_roughness: Handle<Image> = asset_server.load("textures/bark_willow/roughness.dds");
+    // let bark_texture_displacement: Handle<Image> = asset_server.load("textures/bark_willow/displacement.dds");
     let bark_material = Some(MeshMaterial3d(materials.add(
         StandardMaterial {
             base_color_texture: Some(bark_texture_color),
@@ -76,9 +81,9 @@ fn setup(
         }
     )));
 
-    let leaf_texture_color: Handle<Image> = asset_server.load("textures/deciduous_leaves/color.png");
-    let leaf_texture_normal: Handle<Image> = asset_server.load("textures/deciduous_leaves/normal_gl.png");
-    let leaf_texture_roughness: Handle<Image> = asset_server.load("textures/deciduous_leaves/roughness.png");
+    let leaf_texture_color: Handle<Image> = asset_server.load("textures/deciduous_leaves/color.dds");
+    let leaf_texture_normal: Handle<Image> = asset_server.load("textures/deciduous_leaves/normal_gl.dds");
+    let leaf_texture_roughness: Handle<Image> = asset_server.load("textures/deciduous_leaves/roughness.dds");
     let leaf_material = Some(MeshMaterial3d(materials.add(
         StandardMaterial {
             base_color_texture: Some(leaf_texture_color),
