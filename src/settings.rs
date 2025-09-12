@@ -148,7 +148,7 @@ pub struct BranchParams {
     /// The first value is ignored (the trunk is always starting at the ground level)
     pub start: [f32; 4],
 
-    /// taper per level
+    /// taper per level (how fast the branch gets thinner until the end; clamped between 0.0 and 0.9999)
     pub taper: [f32; 4],
 
     /// twist per Level
@@ -169,7 +169,7 @@ impl Default for BranchParams {
             sections: [12, 8, 6, 4],
             segments: [8, 6, 4, 3],
             start: [0.0, 0.32, 0.4, 0.0],
-            taper: [0.8, 0.72, 0.86, 0.7],
+            taper: [0.95, 0.8, 0.85, 0.8],
             twist: [0.09, -0.07, 0.0, 0.0],
         }
     }

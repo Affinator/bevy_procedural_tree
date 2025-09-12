@@ -159,16 +159,16 @@ fn recurse_a_branch(
     // for Evergreen we need 'sections' steps, so that at the top we have the target taper
     // for Deciduous we need even more steps, due to the trunk being build from sections*levels parts
     let taper_amount_per_section = match settings.tree_type {
-        TreeType::Deciduous => f32::powf(1.0 - state.taper, (1.0/state.sections as f32) / (f32::from(settings.branch.levels) + 1.0)),
-        TreeType::Evergreen => f32::powf(1.0 - state.taper, 1.0/state.sections as f32), 
+        TreeType::Deciduous => f32::powf(1.0 - state.taper.clamp(0.0, 0.9999), (1.0/state.sections as f32) / (f32::from(settings.branch.levels) + 1.0)),
+        TreeType::Evergreen => f32::powf(1.0 - state.taper.clamp(0.0, 0.9999), 1.0/state.sections as f32), 
     };
     
     // iterate over sections + one final ring
     // the =sections is needed because to have x sections, we need x+1 rows of vertices
     for section_counter in 0..=state.sections {
         // update radius
-        if section_counter == state.sections && ((state.recursion_count == settings.branch.levels as usize) || matches!(settings.tree_type, TreeType::Evergreen)) {
-            // last ring of the last section of the last level is a tip
+        if section_counter == state.sections && !((state.level == 0) && matches!(settings.tree_type, TreeType::Deciduous)) {
+            // last ring of the last section is a tip (except the main branch/trunk of deciduous trees)
             section_radius = f32::EPSILON;
         } 
     
