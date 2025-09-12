@@ -83,6 +83,7 @@ fn generate_branches_internal(settings: &TreeMeshSettings, state: BranchGenState
     #[cfg(feature = "u32_indices")]
     branches_mesh.insert_indices(Indices::U32(branches_attributes.indices));
     //branches_mesh.insert_attribute(Mesh::ATTRIBUTE_COLOR, branches_colors);
+    branches_mesh.generate_tangents()?;
 
     let mut leaves_mesh = Mesh::new(PrimitiveTopology::TriangleList, RenderAssetUsages::MAIN_WORLD | RenderAssetUsages::RENDER_WORLD);
     leaves_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, leaves_attributes.positions);
@@ -92,6 +93,7 @@ fn generate_branches_internal(settings: &TreeMeshSettings, state: BranchGenState
     leaves_mesh.insert_indices(Indices::U16(leaves_attributes.indices));
     #[cfg(feature = "u32_indices")]
     leaves_mesh.insert_indices(Indices::U32(leaves_attributes.indices));
+    leaves_mesh.generate_tangents()?;
 
     Ok((branches_mesh, leaves_mesh))
 }
