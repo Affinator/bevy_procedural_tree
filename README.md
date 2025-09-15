@@ -20,7 +20,7 @@ In the showroom are two trees: The tree in the middle uses the global `TreeMeshS
 
 Internally this will generate the Mesh3d for the entity and a child entity for the mesh of the leaves. It will apply the materials from the `TreeDefaultMaterials` resource, or from a provided override.
 
-### Explanation of the most iimportant structs
+### Explanation of the most important structs
 #### TreeMeshSettings resource
 Defines the general structure of the generated 3d mesh. Every parameter is documented.
 
