@@ -102,9 +102,9 @@ fn setup(
     commands.spawn((
         Tree {
             seed: 0,
-            tree_mesh_settings: None, // set to None to fallback to the global resource
-            bark_material: bark_material.clone(),
-            leaf_material: leaf_material.clone(),
+            tree_mesh_settings_override: None, // set to None to fallback to the global resource
+            bark_material_override: bark_material.clone(),
+            leaf_material_override: leaf_material.clone(),
         },
         Transform::from_xyz(0.0, 0.0, 0.0)
     ));
@@ -113,9 +113,9 @@ fn setup(
     commands.spawn((
         Tree {
             seed: 0,
-            tree_mesh_settings: Some(TreeMeshSettings::default()), // set to None to fallback to the global resource
-            bark_material,
-            leaf_material,
+            tree_mesh_settings_override: Some(TreeMeshSettings::default()), // set to None to fallback to the global resource
+            bark_material_override: bark_material,
+            leaf_material_override: leaf_material,
         },
         Transform::from_xyz(4.0, 0.0, -3.0)
     ));
