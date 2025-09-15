@@ -1,6 +1,8 @@
 # bevy_procedural_tree
 Procedural 3D trees for bevy - ported from the javascript ez-tree repository with some adjustments to better fit bevy and some changes to the semantics of the parameters due to personal opinion.
 
+![Showroom example](/images/showroom.jpg)
+
 ## Features
 * Mesh generation based on given TreeMeshSettings (a standard Mesh3d)
 * Generation by global TreeMeshSettings or per instance (chosen per entity)
