@@ -139,6 +139,10 @@ pub struct BranchParams {
     pub radius_factor: [f32; 4],
 
     /// how many sections each brach has per level (along its length; more sections = more polygons)
+    /// 
+    /// hint: as textures are repeated (one full uv-range per section), it can be beneficial to play around with this value to influence how often the given texture repeats on this branch to better fit the texture size
+    /// 
+    /// Additionnaly take a look at ['bevy::pbr::StandardMaterial::uv_transform']
     pub sections: [u8; 4],
 
     /// how many segments each branch has per section per level (how 'round' the mesh is; more segments = more polygons)
