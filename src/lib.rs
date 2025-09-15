@@ -2,12 +2,12 @@ pub mod enums;
 pub mod settings;
 pub mod errors;
 
-mod meshgen;
+pub mod meshgen;
 
 use bevy::{ecs::{component::HookContext, world::DeferredWorld}, prelude::*};
 use fastrand::Rng;
 
-use crate::{meshgen::generate_tree, settings::TreeMeshSettings};
+use crate::{meshgen::generate_tree_meshes, settings::TreeMeshSettings};
 
 
 pub struct TreeProceduralGenerationPlugin;
@@ -80,7 +80,7 @@ fn new_tree_component_added(mut world: DeferredWorld, context: HookContext) {
 
     let mut rng: Rng = Rng::with_seed(tree.seed);
 
-    match generate_tree(&tree_mesh_settings, &mut rng) {
+    match generate_tree_meshes(&tree_mesh_settings, &mut rng) {
         Ok((branches_mesh, leaves_mesh)) => {
             // retrieve AssetServer
             let mut meshes = world.get_resource_mut::<Assets<Mesh>>().unwrap();
@@ -136,7 +136,7 @@ fn update_all_tree_meshes_with_local_settings(
         
         let mut rng: Rng = Rng::with_seed(tree.seed);
 
-        match generate_tree(tree_settings, &mut rng) {
+        match generate_tree_meshes(tree_settings, &mut rng) {
             Ok((branches_mesh, leaves_mesh)) => {
                 let branches_mesh = Mesh3d(meshes.add(branches_mesh));
                 let leaves_mesh = Mesh3d(meshes.add(leaves_mesh));
@@ -191,7 +191,7 @@ fn update_all_tree_meshes_with_global_settings(
         if tree.tree_mesh_settings_override.is_none() {
             let mut rng: Rng = Rng::with_seed(tree.seed);
 
-            match generate_tree(&tree_settings, &mut rng) {
+            match generate_tree_meshes(&tree_settings, &mut rng) {
                 Ok((branches_mesh, leaves_mesh)) => {
                     let branches_mesh = Mesh3d(meshes.add(branches_mesh));
                     let leaves_mesh = Mesh3d(meshes.add(leaves_mesh));

@@ -47,7 +47,11 @@ struct MeshAttributes {
     indices: Vec<u32>
 }
 
-pub(crate) fn generate_tree(settings: &TreeMeshSettings, rng: &mut Rng) -> Result<(Mesh, Mesh), BevyError> { 
+/// Generate two meshes: the trunk/branches and the leaves
+/// 
+/// Both meshes together represent a tree. The mesh is built according to the provided TreeMeshSettings.
+/// If the tree should be reproduced use the same settings and the same Rng (including the same seed).
+pub fn generate_tree_meshes(settings: &TreeMeshSettings, rng: &mut Rng) -> Result<(Mesh, Mesh), BevyError> { 
     let state: BranchGenState = BranchGenState {
         origin: Vec3::ZERO,
         orientation: Quat::IDENTITY,

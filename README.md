@@ -15,12 +15,16 @@ See the showroom example: ```cargo run --example showroom --features "inspector 
 
 In the showroom are two trees: The tree in the middle uses the global `TreeMeshSettings` resource. The tree to the side uses the `TreeMeshSettings` component, which can be modified on the entity itself via the inspector.
 
-### Quick start
+### Quick start (with TreeProceduralGenerationPlugin)
 1. To enable auto generation: add the `TreeProceduralGenerationPlugin` to your app
 2. (Optional) Modify the `TreeMeshSettings` and `TreeDefaultMaterials` to your liking
 3. Spawn an entity and add the `Tree`component
 
 Internally this will generate the Mesh3d for the entity and a child entity for the mesh of the leaves. It will apply the materials from the `TreeDefaultMaterials` resource, or from a provided override.
+
+### Quick start (without TreeProceduralGenerationPlugin)
+1. use `bevy_procedural_tree::meshgen::generate_tree_meshes()` to generate two meshes (branches/trunk mesh and leaves mesh)
+2. use the meshes for anything you like
 
 ### Explanation of the most important structs
 #### TreeMeshSettings resource
