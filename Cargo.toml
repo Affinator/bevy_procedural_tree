@@ -20,7 +20,8 @@ bevy = { version = "0.16.1", default-features = false, features =  [
     "bevy_pbr",
     "bevy_render",
     "multi_threaded",
-    "std"
+    "std",
+    "bevy_log",
 ]}
 bevy-inspector-egui = { version = "0.33.1", optional = true }
 fastrand = "2.3"
