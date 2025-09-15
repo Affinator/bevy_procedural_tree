@@ -1,5 +1,5 @@
 # bevy_procedural_tree
-Procedural 3D trees for bevy, compatible with bevy 0.16
+Procedural 3D trees for bevy - ported from the javascript ez-tree repository with some adjustments to better fit bevy and some changes to the semantics of the parameters due to personal opinion.
 
 ## Features
 * Mesh generation based on given TreeMeshSettings (a standard Mesh3d)
@@ -20,6 +20,7 @@ In the showroom are two trees: The tree in the middle uses the global `TreeMeshS
 
 Internally this will generate the Mesh3d for the entity and a child entity for the mesh of the leaves. It will apply the materials from the `TreeDefaultMaterials` resource, or from a provided override.
 
+### Explanation of the most iimportant structs
 #### TreeMeshSettings resource
 Defines the general structure of the generated 3d mesh. Every parameter is documented.
 
@@ -34,9 +35,9 @@ Added to an entity to generate a new tree. It has 4 parameters:
 * an optional override for the `TreeDefaultMaterials` leaf material
 
 ## Possible ToDos
-* Do not regenerate the whole tree each time the settings change
+* Do not regenerate the whole tree each time the settings change (but do partial updates)
+* Provide an example vertex shader for wind
 * Implement "growing"
-* more granular regeneration (only regenerate parts that have changed)
 * Caching of already generated trees (i.e. with the lru crate)
 * Multiple LODs
 * Different "normal" modes (currently just orthogonal to the surface; i.e. inspiration: [Reddit: Fluffy trees](https://www.reddit.com/r/Unity3D/comments/jhwfkj/fluffy_trees_using_custom_shader_that_turns_quad/))
