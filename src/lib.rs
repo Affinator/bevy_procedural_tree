@@ -4,7 +4,7 @@ pub mod errors;
 
 pub mod meshgen;
 
-use bevy::{ecs::{component::HookContext, world::DeferredWorld}, prelude::*};
+use bevy::{ecs::{lifecycle::HookContext, world::DeferredWorld}, prelude::*};
 use fastrand::Rng;
 
 use crate::{meshgen::generate_tree_meshes, settings::TreeMeshSettings};

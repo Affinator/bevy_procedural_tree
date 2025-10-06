@@ -1,7 +1,9 @@
 use core::f32;
 use std::f32::consts::PI;
 
-use bevy::{asset::RenderAssetUsages, prelude::*, render::mesh::{Indices, PrimitiveTopology}};
+use bevy::mesh::Indices;
+use bevy::mesh::PrimitiveTopology;
+use bevy::{asset::RenderAssetUsages, prelude::*};
 use fastrand::Rng;
 
 use crate::{enums::TreeType, settings::TreeMeshSettings};

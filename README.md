@@ -11,7 +11,7 @@ Procedural 3D trees for bevy - ported from the javascript ez-tree repository wit
 * Optional use of u32_indices for the mesh (default is u16; see `u32_indices` feature in Cargo.toml)
 
 ## Usage
-See the showroom example: ```cargo run --example showroom --features "inspector perf_ui"```
+See the showroom example: ```cargo run --example showroom --features "inspector"```
 
 In the showroom are two trees: The tree in the middle uses the global `TreeMeshSettings` resource. The tree to the side uses the `TreeMeshSettings` component, which can be modified on the entity itself via the inspector.
 
@@ -55,6 +55,7 @@ Added to an entity to generate a new tree. It has 4 parameters:
 
 | Bevy    | bevy_procedural_tree |
 | ------- | ----- |
+| 0.17    | 0.2   |
 | 0.16    | 0.1   |
 
 ## Acknowledgements
