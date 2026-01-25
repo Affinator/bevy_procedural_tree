@@ -55,6 +55,7 @@ Added to an entity to generate a new tree. It has 4 parameters:
 
 | Bevy    | bevy_procedural_tree |
 | ------- | ----- |
+| 0.18    | 0.3   |
 | 0.17    | 0.2   |
 | 0.16    | 0.1   |
 

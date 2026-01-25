@@ -1,10 +1,14 @@
 use bevy::input::mouse::{AccumulatedMouseMotion, MouseWheel};
 use bevy::prelude::*;
 use bevy::core_pipeline::tonemapping::Tonemapping;
-use bevy_inspector_egui::bevy_egui::EguiPlugin;
-use bevy_inspector_egui::quick::{ResourceInspectorPlugin, WorldInspectorPlugin};
+
 use bevy_procedural_tree::settings::TreeMeshSettings;
 use bevy_procedural_tree::{Tree, TreeProceduralGenerationPlugin};
+
+#[cfg(feature = "inspector")]
+use bevy_inspector_egui::bevy_egui::EguiPlugin;
+#[cfg(feature = "inspector")]
+use bevy_inspector_egui::quick::{ResourceInspectorPlugin, WorldInspectorPlugin};
 
 #[cfg(feature = "perf_ui")]
 use bevy::dev_tools::fps_overlay::FpsOverlayPlugin;
@@ -17,11 +21,17 @@ fn main() {
             ..default()
         })
     )
-    .add_plugins(TreeProceduralGenerationPlugin)
-    .add_plugins(EguiPlugin::default())
-    .add_plugins(WorldInspectorPlugin::new())
-    .add_plugins(ResourceInspectorPlugin::<TreeMeshSettings>::default())
-    .add_systems(Startup, setup)
+    .add_plugins(TreeProceduralGenerationPlugin);
+
+    #[cfg(feature = "inspector")]
+    {
+        app.register_type::<GizmoConfigStore>(); // no idea why this is needed, but the example panics without
+        app.add_plugins(EguiPlugin::default())
+        .add_plugins(WorldInspectorPlugin::new())
+        .add_plugins(ResourceInspectorPlugin::<TreeMeshSettings>::default());
+    }
+
+    app.add_systems(Startup, setup)
     .add_systems(Update, orbit);
     
     #[cfg(feature = "perf_ui")]
