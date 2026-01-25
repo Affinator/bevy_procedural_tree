@@ -1,3 +1,6 @@
+### v0.3
+* migrate to bevy 0.18
+
 ### v0.2
 * migrate to bevy 0.17
 * made feature "perf_ui" optional in showroom example
