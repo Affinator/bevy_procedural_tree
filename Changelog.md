@@ -1,3 +1,7 @@
+### v0.4
+* migrate to bevy 0.19
+* therefore split up TreeMeshSettings into one component and one resource (now called GlobalTreeMeshSettings)
+
 ### v0.3
 * migrate to bevy 0.18
 
