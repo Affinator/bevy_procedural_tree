@@ -4,35 +4,50 @@
 
 use bevy::prelude::*;
 
-#[cfg(feature="inspector")]
+#[cfg(feature = "inspector")]
 use bevy_inspector_egui::prelude::*;
 
 use crate::enums::{LeafBillboard, TreeType};
 
+#[cfg(feature = "inspector")]
+#[derive(Resource, Reflect, InspectorOptions, Debug, Clone, PartialEq)]
+#[reflect(Resource, InspectorOptions)]
+pub struct GlobalTreeMeshSettings {
+    pub tree_type: TreeType,
+    pub branch: BranchParams,
+    pub leaves: LeafParams,
+}
 
-#[cfg(feature="inspector")]
-#[derive(Resource, Component, Reflect, InspectorOptions, Debug, Clone, PartialEq)]
-#[reflect(Resource, Component, InspectorOptions)]
+#[cfg(feature = "inspector")]
+#[derive(Component, Reflect, InspectorOptions, Debug, Clone, PartialEq)]
+#[reflect(Component, InspectorOptions)]
 pub struct TreeMeshSettings {
     pub tree_type: TreeType,
     pub branch: BranchParams,
     pub leaves: LeafParams,
 }
 
+#[cfg(not(feature = "inspector"))]
+#[derive(Resource, Reflect, Debug, Clone, PartialEq)]
+#[reflect(Resource)]
+pub struct GlobalTreeMeshSettings {
+    pub tree_type: TreeType,
+    pub branch: BranchParams,
+    pub leaves: LeafParams,
+}
 
-#[cfg(not(feature="inspector"))]
-#[derive(Resource, Component, Reflect, Debug, Clone, PartialEq)]
-#[reflect(Resource, Component)]
+#[cfg(not(feature = "inspector"))]
+#[derive(Component, Reflect, Debug, Clone, PartialEq)]
+#[reflect(Component)]
 pub struct TreeMeshSettings {
     pub tree_type: TreeType,
     pub branch: BranchParams,
     pub leaves: LeafParams,
 }
 
-
-impl Default for TreeMeshSettings {
+impl Default for GlobalTreeMeshSettings {
     fn default() -> Self {
-        Self {       
+        Self {
             tree_type: TreeType::Deciduous,
             branch: BranchParams::default(),
             leaves: LeafParams::default(),
@@ -40,6 +55,25 @@ impl Default for TreeMeshSettings {
     }
 }
 
+impl Default for TreeMeshSettings {
+    fn default() -> Self {
+        Self {
+            tree_type: TreeType::Deciduous,
+            branch: BranchParams::default(),
+            leaves: LeafParams::default(),
+        }
+    }
+}
+
+impl From<GlobalTreeMeshSettings> for TreeMeshSettings {
+    fn from(value: GlobalTreeMeshSettings) -> Self {
+        Self {
+            tree_type: value.tree_type,
+            branch: value.branch,
+            leaves: value.leaves,
+        }
+    }
+}
 
 /**
  * All branches have a random angle to their parent branch/trunk.
@@ -57,13 +91,17 @@ pub struct BranchForce {
     /// starting at which branch radius should the force not have any effect
     /// default is 0.1 (a branch of a thickness of 20cm should not be bothered by outside forces)
     /// must be positive
-    pub radius_cutoff: f32
+    pub radius_cutoff: f32,
 }
 
 impl Default for BranchForce {
     fn default() -> Self {
         Self {
-            direction: Vec3 { x: 0.0, y: 1.0, z: 0.0 },
+            direction: Vec3 {
+                x: 0.0,
+                y: 1.0,
+                z: 0.0,
+            },
             strength: 0.05,
             radius_cutoff: 0.1,
         }
@@ -77,9 +115,9 @@ impl Default for BranchForce {
 #[repr(u8)]
 pub enum BranchRecursionLevel {
     Zero = 0,
-    One  = 1,
-    Two  = 2,
-    Three= 3,
+    One = 1,
+    Two = 2,
+    Three = 3,
     //Four = 4, // four recursion levels create way to small branches (polygons in the subpixel range)
 }
 
@@ -98,17 +136,22 @@ impl TryFrom<u8> for BranchRecursionLevel {
 }
 
 impl From<BranchRecursionLevel> for u8 {
-    fn from(z: BranchRecursionLevel) -> u8 { z as u8 }
+    fn from(z: BranchRecursionLevel) -> u8 {
+        z as u8
+    }
 }
 
 impl From<BranchRecursionLevel> for usize {
-    fn from(z: BranchRecursionLevel) -> usize { z as usize }
+    fn from(z: BranchRecursionLevel) -> usize {
+        z as usize
+    }
 }
 
 impl From<BranchRecursionLevel> for f32 {
-    fn from(z: BranchRecursionLevel) -> f32 { z as usize as f32 }
+    fn from(z: BranchRecursionLevel) -> f32 {
+        z as usize as f32
+    }
 }
-
 
 #[derive(Reflect, Debug, Clone, PartialEq)]
 pub struct BranchParams {
@@ -139,9 +182,9 @@ pub struct BranchParams {
     pub radius_factor: [f32; 4],
 
     /// how many sections each brach has per level (along its length; more sections = more polygons)
-    /// 
+    ///
     /// hint: as textures are repeated (one full uv-range per section), it can be beneficial to play around with this value to influence how often the given texture repeats on this branch to better fit the texture size
-    /// 
+    ///
     /// Additionnaly take a look at ['bevy::pbr::StandardMaterial::uv_transform']
     pub sections: [u8; 4],
 
@@ -196,9 +239,9 @@ pub struct LeafParams {
     /// average size of leaves
     pub size: f32,
     /// variance of leaf sizes (negative values are ignored)
-    /// 
+    ///
     /// internal formula for a single leaf is: (rng(-1.0..1.0) * size_variance + 1.0) * size
-    pub size_variance: f32
+    pub size_variance: f32,
 }
 
 impl Default for LeafParams {
@@ -213,4 +256,3 @@ impl Default for LeafParams {
         }
     }
 }
-

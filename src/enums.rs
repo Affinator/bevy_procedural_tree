@@ -14,8 +14,8 @@ use bevy::reflect::Reflect;
 
 #[derive(Reflect, Clone, Copy, Debug, PartialEq)]
 pub enum LeafBillboard {
-  Single,
-  Double,
+    Single,
+    Double,
 }
 
 // #[derive(Reflect, Clone, Copy, Debug, PartialEq)]
@@ -28,6 +28,6 @@ pub enum LeafBillboard {
 
 #[derive(Reflect, Clone, Copy, Debug, PartialEq)]
 pub enum TreeType {
-  Deciduous,
-  Evergreen,
+    Deciduous,
+    Evergreen,
 }
