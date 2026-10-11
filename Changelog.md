@@ -1,3 +1,7 @@
+### v0.5
+* migrate to bevy 0.20
+* update fastrand
+
 ### v0.4
 * migrate to bevy 0.19
 * therefore split up TreeMeshSettings into one component and one resource (now called GlobalTreeMeshSettings)

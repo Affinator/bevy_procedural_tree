@@ -1,4 +1,4 @@
-use core::f32;
+use std::f32::consts::FRAC_PI_2;
 use std::f32::consts::PI;
 
 use bevy::mesh::Indices;
@@ -556,7 +556,7 @@ fn generate_leaf(
 
     let rotations: &[f32] = match settings.leaves.leaf_billboard {
         crate::enums::LeafBillboard::Single => &[0.0],
-        crate::enums::LeafBillboard::Double => &[0.0, f32::consts::FRAC_PI_2],
+        crate::enums::LeafBillboard::Double => &[0.0, FRAC_PI_2],
     };
 
     for rotation in rotations.iter() {

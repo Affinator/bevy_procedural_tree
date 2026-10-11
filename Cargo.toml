@@ -15,7 +15,7 @@ inspector = ["bevy-inspector-egui"]
 perf_ui = []
 
 [dependencies]
-bevy = { version = "0.19", default-features = false, features =  [
+bevy = { version = "0.20", default-features = false, features =  [
     "bevy_color",
     "bevy_pbr",
     "bevy_render",
@@ -24,11 +24,11 @@ bevy = { version = "0.19", default-features = false, features =  [
     "std",
     "bevy_log"
 ]}
-bevy-inspector-egui = { version = "0.37", optional = true }
-fastrand = "2.3"
+bevy-inspector-egui = { git = "https://github.com/taboky-dev/bevy-inspector-egui.git", rev = "9a5b086", optional = true }
+fastrand = "2.5"
 
 [dev-dependencies]
-bevy = { version = "0.19", default-features = false, features =  [
+bevy = { version = "0.20", default-features = false, features =  [
     "bevy_color",
     "bevy_core_pipeline",
     "bevy_asset",
@@ -49,7 +49,7 @@ bevy = { version = "0.19", default-features = false, features =  [
     "wayland",
     "default_font",
     "sysinfo_plugin",
-    "bevy_dev_tools"
+    "dev",
 ]}
 
 # Enable max optimizations for dependencies, but not for our code:
